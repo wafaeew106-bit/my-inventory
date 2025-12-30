@@ -3,70 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أداة الجرد - النسخة الصارمة</title>
+    <title>أداة جرد المحل 2025</title>
     
-    <!-- استخدمنا هنا الطريقة الأكثر أماناً واستقراراً في 2025 -->
-    <script src="cdn.jsdelivr.net" crossorigin="anonymous"></script>
+    <!-- الخطة البديلة: استدعاء المكتبة من سيرفر جوجل الرسمي مباشرة بدلاً من jsdelivr -->
+    <script src="www.gstatic.com" crossorigin="anonymous"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; text-align: center; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #video-wrapper { position: relative; width: 100%; border-radius: 15px; overflow: hidden; background: #000; border: 2px solid #333; }
-        video { width: 100%; display: block; }
+        body { font-family: sans-serif; background-color: #121212; color: white; text-align: center; padding: 20px; }
+        .box { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        #v-res { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 10px; overflow: hidden; }
+        video { width: 100%; height: 100%; object-fit: cover; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        button { background: linear-gradient(45deg, #28a745, #218838); color: white; border: none; padding: 15px 40px; font-size: 18px; border-radius: 50px; cursor: pointer; margin-top: 20px; font-weight: bold; transition: 0.3s; }
-        button:disabled { background: #444; color: #888; cursor: not-allowed; }
-        #status-bar { margin-top: 20px; padding: 10px; font-size: 14px; border-radius: 8px; background: #252525; border: 1px solid #333; }
-        .success { color: #4caf50; }
-        .error { color: #f44336; }
-        .loading { color: #ffeb3b; }
+        button { background: #28a745; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 10px; cursor: pointer; margin-top: 20px; width: 100%; }
+        button:disabled { background: #444; }
+        #st { margin-top: 15px; font-size: 14px; color: #ffeb3b; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>نظام الجرد البصري 2025</h2>
-        <p style="font-size: 14px; color: #aaa;">هذه النسخة مصممة لتخطي أخطاء المسارات المحلية</p>
-
-        <div id="video-wrapper">
-            <video id="webcam" autoplay playsinline></video>
-            <canvas id="output_canvas"></canvas>
+    <div class="box">
+        <h3>نظام جرد المنتجات بالذكاء الاصطناعي</h3>
+        <div id="v-res">
+            <video id="web" autoplay playsinline></video>
+            <canvas id="out"></canvas>
         </div>
-
-        <button id="startBtn" disabled>جاري تهيئة الذكاء الاصطناعي...</button>
-        
-        <div id="status-bar">
-            الحالة: <span id="status-text" class="loading">انتظار تحميل المكتبات...</span>
-        </div>
+        <button id="go" disabled>جاري التحميل...</button>
+        <div id="st">تحميل المحرك من سيرفرات Google...</div>
     </div>
 
     <script>
-        // تعريف العناصر
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('output_canvas');
+        const video = document.getElementById('web');
+        const canvas = document.getElementById('out');
         const ctx = canvas.getContext('2d');
-        const btn = document.getElementById('startBtn');
-        const statusText = document.getElementById('status-text');
+        const btn = document.getElementById('go');
+        const st = document.getElementById('st');
+        let detector;
 
-        let objectDetector;
-
-        // دالة لبدء النظام
-        async function initializeAI() {
+        async function init() {
             try {
-                // فحص هل المكتبة موجودة فعلاً في نافذة المتصفح
-                if (typeof window.tasksVision === 'undefined') {
-                    // محاولة أخيرة إذا فشل المسار التقليدي: سنقوم بإنشاء Script Tag برمجياً
-                    throw new Error("المتصفح حظر الرابط الخارجي. سنحاول مرة أخرى...");
-                }
-
+                // التأكد من أن المكتبة تم تحميلها في الذاكرة
                 const vision = window.tasksVision;
-                statusText.innerText = "جاري تحميل محرك WASM من جوجل...";
+                if (!vision) throw new Error("سيرفر المكتبة محجوب لديك.");
 
-                const filesetResolver = await vision.FilesetResolver.forVisionTasks(
-                    "cdn.jsdelivr.net"
-                );
+                // استخدام سيرفر جوجل لملفات الـ WASM أيضاً
+                const wasm = "www.gstatic.com";
+                const res = await vision.FilesetResolver.forVisionTasks(wasm);
 
-                objectDetector = await vision.ObjectDetector.createFromOptions(filesetResolver, {
+                detector = await vision.ObjectDetector.createFromOptions(res, {
                     baseOptions: {
                         modelAssetPath: "storage.googleapis.com",
                         delegate: "GPU"
@@ -75,74 +58,41 @@
                     runningMode: "VIDEO"
                 });
 
-                statusText.innerText = "المحرك جاهز! يمكنك البدء الآن.";
-                statusText.className = "success";
+                st.innerText = "متصل بنجاح! النظام جاهز.";
+                st.style.color = "#4caf50";
                 btn.disabled = false;
-                btn.innerText = "فتح الكاميرا وبدء الجرد";
-
-            } catch (err) {
-                statusText.innerText = "خطأ في الاتصال: " + err.message;
-                statusText.className = "error";
-                console.error("Detailed Error:", err);
+                btn.innerText = "بدء عملية الجرد الآن";
+            } catch (e) {
+                st.innerText = "خطأ: " + e.message + " (جرب متصفحاً آخر أو أوقف مانع الإعلانات)";
+                st.style.color = "#f44336";
             }
         }
 
-        // تشغيل الكاميرا
         btn.onclick = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment" }
-                });
-                video.srcObject = stream;
-                video.onloadeddata = () => {
-                    btn.style.display = "none";
-                    statusText.innerText = "النظام يعمل الآن.. وجه الكاميرا للمنتجات";
-                    detectFrame();
-                };
-            } catch (err) {
-                statusText.innerText = "خطأ في الكاميرا: " + err.message;
-                statusText.className = "error";
-            }
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            video.srcObject = stream;
+            video.onloadeddata = () => {
+                btn.style.display = 'none';
+                predict();
+            };
         };
 
-        // حلقة الكشف المستمر
-        async function detectFrame() {
-            if (video.paused || video.ended) return;
-
+        async function predict() {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-
-            const detections = await objectDetector.detectForVideo(video, Date.now());
-            
+            const dets = await detector.detectForVideo(video, Date.now());
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            detections.detections.forEach(det => {
-                const { originX, originY, width, height } = det.boundingBox;
-                const label = det.categories[0].categoryName;
-                const score = Math.round(det.categories[0].score * 100);
-
-                // رسم المستطيل
-                ctx.strokeStyle = "#4caf50";
-                ctx.lineWidth = 4;
+            dets.detections.forEach(d => {
+                const { originX, originY, width, height } = d.boundingBox;
+                ctx.strokeStyle = "#00ff00"; ctx.lineWidth = 4;
                 ctx.strokeRect(originX, originY, width, height);
-
-                // رسم الخلفية للنص
-                ctx.fillStyle = "#4caf50";
-                ctx.font = "bold 18px Arial";
-                const text = `${label} ${score}%`;
-                const textWidth = ctx.measureText(text).width;
-                ctx.fillRect(originX, originY - 25, textWidth + 10, 25);
-
-                // كتابة النص
-                ctx.fillStyle = "#ffffff";
-                ctx.fillText(text, originX + 5, originY - 7);
+                ctx.fillStyle = "#00ff00"; ctx.font = "bold 20px Arial";
+                ctx.fillText(d.categories[0].categoryName, originX, originY - 10);
             });
-
-            requestAnimationFrame(detectFrame);
+            requestAnimationFrame(predict);
         }
 
-        // بدء العملية فور تحميل الصفحة
-        window.onload = initializeAI;
+        window.onload = init;
     </script>
 </body>
 </html>
