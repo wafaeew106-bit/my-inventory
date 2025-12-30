@@ -3,171 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الجرد البصري الذكي 2025</title>
+    <title>نظام الجرد الذكي - قاريء الصوت 2025</title>
     <style>
-        :root { --primary: #3b82f6; --success: #10b981; --bg: #0f172a; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; }
-        .wrapper { max-width: 1100px; margin: auto; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
-        #cam-container { position: relative; border-radius: 20px; overflow: hidden; border: 3px solid var(--primary); background: #000; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; padding: 10px; }
+        .jard-wrapper { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1fr 350px; gap: 15px; }
+        #cam-container { position: relative; background: #000; border-radius: 20px; overflow: hidden; border: 3px solid #3b82f6; }
         video { width: 100%; display: block; }
-        .panel { background: #1e293b; padding: 20px; border-radius: 20px; border: 1px solid #334155; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--primary); background: #0f172a; color: white; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
-        .btn-train { background: #f59e0b; color: white; }
-        .inventory-log { background: #020617; padding: 15px; border-radius: 12px; height: 300px; overflow-y: auto; text-align: right; border: 1px solid #334155; }
-        .item-card { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #1e293b; color: var(--success); }
-        .status-pill { display: inline-block; padding: 5px 15px; border-radius: 50px; background: #334155; color: #fbbf24; font-size: 13px; margin-bottom: 10px; }
-        #match-info { font-size: 11px; color: #94a3b8; }
+        #status-msg { background: #1e293b; padding: 10px; border-radius: 10px; color: #fbbf24; font-weight: bold; margin-top: 10px; }
+        .side-panel { background: #1e293b; padding: 20px; border-radius: 20px; border: 1px solid #334155; }
+        .inventory-log { background: #020617; padding: 15px; height: 350px; overflow-y: auto; text-align: right; border-radius: 10px; border: 1px solid #334155; font-family: monospace; }
+        .item-entry { color: #10b981; padding: 8px; border-bottom: 1px solid #1e293b; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <h2 style="color: var(--primary);">🛒 محرك الجرد بالتمييز البصري (إصدار محلي 100%)</h2>
-    <div id="status" class="status-pill">النظام جاهز للتعلم والجرد...</div>
+    <h2 style="color: #3b82f6;">🛒 نظام الجرد الذكي (تسمية صوتية)</h2>
+    <div id="status-msg">النظام جاهز للعمل. مرر المنتج...</div>
 
-    <div class="wrapper">
+    <div class="jard-wrapper">
         <div id="cam-container">
             <video id="webcam" autoplay playsinline muted></video>
             <div id="flash" style="position:absolute; top:0; left:0; width:100%; height:100%; background:white; opacity:0; pointer-events:none;"></div>
         </div>
 
-        <div class="panel">
-            <h4>1. تعريف الصنف (بصمة بصرية)</h4>
-            <input type="text" id="target-name" placeholder="اكتب اسم الصنف (مثلاً: علبة تونة)">
-            <button class="btn btn-train" onclick="captureSignature()">حفظ بصمة المنتج الحالية</button>
-            <div id="match-info">سيتم ربط شكل المنتج بالاسم المكتوب</div>
-
-            <hr style="border: 0.5px solid #334155; margin: 20px 0;">
-
-            <h4>2. سجل الجرد الذكي</h4>
-            <div id="log" class="inventory-log">
-                <div style="color: #475569; text-align: center;">عرف المنتجات أولاً ثم ابدأ التمرير...</div>
+        <div class="side-panel">
+             <div id="log" class="inventory-log">
+                <div style="color: #475569; text-align: center;">سجل الجرد الصوتي...</div>
             </div>
-            
-            <button class="btn" style="background: var(--success); color: white; margin-top: 15px;" onclick="exportCSV()">تحميل تقرير الجرد</button>
+             <button onclick="exportCSV()" style="margin-top: 15px; width: 100%; padding: 12px; background: #10b981; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold;">تحميل التقرير النهائي</button>
         </div>
     </div>
 
     <script>
-        // الكود يعتمد على تحليل البيانات البصرية (Pixel Data) مباشرة دون مكتبات خارجية
+        // الكود يعتمد على جافا سكريبت الصافية وميزات المتصفح الداخلية فقط
         const video = document.getElementById('webcam');
         const log = document.getElementById('log');
-        const targetName = document.getElementById('target-name');
+        const statusMsg = document.getElementById('status-msg');
         const flash = document.getElementById('flash');
         
-        let signatures = []; // تخزين البصمات { name: "اسم", data: [ألوان] }
-        let inventory = {};  // تخزين الأعداد
+        let inventory = {}; // { "الاسم": العدد }
         let isProcessing = false;
         let lastFrame;
+        let recognition; // محرك التعرف الصوتي
 
-        // 1. تشغيل الكاميرا
         async function init() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
-                requestAnimationFrame(analyze);
+                statusMsg.innerText = "✅ الكاميرا تعمل. جاري تهيئة التعرف الصوتي...";
+                setupVoiceRecognition();
+                requestAnimationFrame(analyzeMotion);
             } catch (e) { alert("يرجى تفعيل الكاميرا"); }
         }
 
-        // 2. وظيفة "أخذ البصمة" (الحدث الرئيسي للتعريف)
-        function captureSignature() {
-            if (targetName.value === "") { alert("اكتب الاسم أولاً!"); return; }
-            
-            const sig = getFrameSignature();
-            signatures.push({ name: targetName.value, data: sig });
-            
-            if (!inventory[targetName.value]) inventory[targetName.value] = 0;
-            
-            showFlash("#f59e0b");
-            document.getElementById('status').innerText = "✅ تم حفظ بصمة: " + targetName.value;
-            targetName.value = ""; // مسح الحقل للاستعداد للصنف التالي
-            updateUI();
+        function setupVoiceRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ar-EG,en-US'; // يدعم العربية والإنجليزية
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = function(event) {
+                const speechToText = event.results[0][0].transcript;
+                processItem(speechToText);
+            };
+
+            recognition.onspeechend = function() {
+                // إيقاف المعالجة بعد النطق
+                setTimeout(() => { isProcessing = false; statusMsg.innerText = "✅ مرر المنتج التالي"; }, 500);
+            };
+
+            recognition.onerror = function(event) {
+                 statusMsg.innerText = 'خطأ في التعرف الصوتي: ' + event.error;
+                 setTimeout(() => { isProcessing = false; statusMsg.innerText = "✅ مرر المنتج التالي"; }, 1000);
+            };
         }
 
-        // 3. تحليل البصمة البصرية (Color Histogram)
-        function getFrameSignature() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = 10; tempCanvas.height = 10; // تقسيم الصورة لـ 100 منطقة
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(video, 0, 0, 10, 10);
-            return tempCtx.getImageData(0, 0, 10, 10).data;
-        }
+        function analyzeMotion() {
+            if (isProcessing) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = 48; canvas.height = 36;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, 48, 36);
+            const currentFrame = ctx.getImageData(0, 0, 48, 36).data;
 
-        // 4. محرك الرصد والمقارنة التلقائي
-        function analyze() {
-            const currentData = getFrameSignature();
-
-            if (lastFrame && !isProcessing && signatures.length > 0) {
-                let motion = 0;
-                for (let i = 0; i < currentData.length; i += 4) {
-                    motion += Math.abs(currentData[i] - lastFrame[i]);
-                }
-
-                // إذا حدث تمرير (حركة)
-                if (motion > 8000) { 
-                    findMatch(currentData);
-                }
-            }
-            lastFrame = currentData;
-            requestAnimationFrame(analyze);
-        }
-
-        // 5. البحث عن أقرب بصمة بصرية مخزنة
-        function findMatch(currentData) {
-            isProcessing = true;
-            let bestMatch = null;
-            let minDiff = Infinity;
-
-            signatures.forEach(sig => {
+            if (lastFrame) {
                 let diff = 0;
-                for (let i = 0; i < currentData.length; i++) {
-                    diff += Math.abs(currentData[i] - sig.data[i]);
+                for (let i = 0; i < currentFrame.length; i += 4) {
+                    diff += Math.abs(currentFrame[i] - lastFrame[i]);
                 }
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    bestMatch = sig.name;
+                if (diff > 10000) { // حدث تمرير
+                    handleDetection();
                 }
-            });
-
-            // إذا كان التشابه قوي (عتبة الحساسية)
-            if (minDiff < 15000) {
-                inventory[bestMatch]++;
-                playBeep();
-                showFlash("#10b981");
-                updateUI();
             }
+            lastFrame = currentFrame;
+            requestAnimationFrame(analyzeMotion);
+        }
 
-            setTimeout(() => { isProcessing = false; }, 1500);
+        function handleDetection() {
+            isProcessing = true;
+            showFlash();
+            playBeep();
+            statusMsg.innerText = "🔊 تم الرصد! قل اسم المنتج الآن...";
+            recognition.start(); // بدء الاستماع لصوتك
+        }
+
+        function processItem(name) {
+             if (!inventory[name]) inventory[name] = 0;
+             inventory[name]++;
+
+             const time = new Date().toLocaleTimeString();
+             const entry = document.createElement('div');
+             entry.className = 'item-entry';
+             entry.innerHTML = `<b>[${time}]</b> تم جرد: <span style="color:#fbbf24; font-weight:bold;">${name}</span> (العدد: ${inventory[name]})`;
+             log.prepend(entry);
+             updateUI();
         }
 
         function updateUI() {
-            log.innerHTML = "";
-            for (let name in inventory) {
-                const row = document.createElement('div');
-                row.className = 'item-card';
-                row.innerHTML = `<span>${name}</span> <span>${inventory[name]}</span>`;
-                log.prepend(row);
-            }
+            // تحديث الواجهة عند الضرورة
         }
 
-        function showFlash(color) {
-            flash.style.background = color;
+        function showFlash() {
             flash.style.opacity = "0.6";
-            setTimeout(() => flash.style.opacity = "0", 100);
+            setTimeout(() => { flash.style.opacity = "0"; }, 100);
         }
 
         function playBeep() {
-            const ac = new AudioContext();
+            const ac = new (window.AudioContext || window.webkitAudioContext)();
             const o = ac.createOscillator();
             o.connect(ac.destination);
             o.start(); o.stop(ac.currentTime + 0.1);
         }
 
         function exportCSV() {
-            let csv = "Item,Count\n";
-            for(let n in inventory) csv += `${n},${inventory[n]}\n`;
+            let csv = "الصنف,الكمية\n";
+            for(let name in inventory) csv += `${name},${inventory[name]}\n`;
             const blob = new Blob([csv], { type: 'text/csv' });
-            window.open(URL.createObjectURL(blob));
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'jard_voice_report.csv'; a.click();
         }
 
         init();
