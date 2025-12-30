@@ -3,110 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اختبار الجرد التلقائي - لابتوب</title>
+    <title>نظام الجرد الذكي - نسخة اللابتوب النهائية</title>
     
-    <!-- مكتبات الذكاء الاصطناعي الأساسية -->
-    <script src="cdnjs.cloudflare.com"></script>
-    <script src="unpkg.com"></script>
+    <!-- روابط كاملة ومحمية ببروتوكول صريح لمنع المتصفح من توجيهها لمجلداتك -->
+    <script src="cdnjs.cloudflare.com" crossorigin="anonymous"></script>
+    <script src="unpkg.com" crossorigin="anonymous"></script>
 
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; margin: 0; padding: 20px; }
-        .camera-box { border: 5px solid #007bff; border-radius: 15px; overflow: hidden; display: inline-block; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #status-msg { margin-top: 15px; font-size: 20px; color: #ffeb3b; background: #333; padding: 10px; border-radius: 10px; display: inline-block; }
-        .log-container { margin-top: 20px; max-width: 500px; margin-left: auto; margin-right: auto; background: #000; color: #0f0; padding: 15px; border-radius: 10px; height: 150px; overflow-y: auto; text-align: right; border: 1px solid #444; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; color: #f8fafc; text-align: center; margin: 0; padding: 20px; }
+        .main-card { max-width: 600px; margin: auto; background: #1e293b; padding: 25px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        #camera-area { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; border: 2px solid #3b82f6; line-height: 0; }
+        canvas { width: 100% !important; height: auto !important; }
+        #status-pill { display: inline-block; margin-top: 20px; padding: 8px 20px; border-radius: 50px; background: #334155; color: #fbbf24; font-weight: 600; font-size: 14px; transition: all 0.5s; }
+        .log-panel { margin-top: 20px; background: #020617; border-radius: 12px; padding: 15px; height: 120px; overflow-y: auto; text-align: right; border: 1px solid #1e293b; font-family: 'Courier New', monospace; }
+        .log-entry { border-bottom: 1px solid #1e293b; padding: 5px 0; color: #10b981; font-size: 13px; }
     </style>
 </head>
 <body>
 
-    <h2>🛒 اختبار نظام الجرد التلقائي (اللابتوب)</h2>
-    <p>بمجرد تحميل "المخ"، وجه زجاجة مياه أو هاتفك أمام كاميرا اللابتوب</p>
-    
-    <div class="camera-box" id="canvas-container">
-        <!-- هنا يظهر بث الكاميرا -->
-    </div>
+    <div class="main-card">
+        <h2 style="margin-top: 0; color: #3b82f6;">🛒 جرد المحل (ذكاء اصطناعي)</h2>
+        <p style="color: #94a3b8; font-size: 14px;">نسخة التجربة على اللابتوب - رصد تلقائي</p>
 
-    <br>
-    <div id="status-msg">جاري تحميل الذكاء الاصطناعي... انتظر لحظة</div>
+        <div id="camera-area">
+            <!-- ستظهر الكاميرا هنا -->
+        </div>
 
-    <div class="log-container" id="inventory-log">
-        <b>سجل الرصد اللحظي:</b><br>
+        <div id="status-pill">جاري استدعاء العقل الاصطناعي...</div>
+
+        <div class="log-panel" id="log">
+            <div style="color: #64748b;">انتظار رصد الأصناف...</div>
+        </div>
     </div>
 
     <script>
         let video;
-        let objectDetector;
+        let detector;
         let detections = [];
+        let isModelReady = false;
+
+        // دالة سحرية للتأكد من أن المكتبات تم تحميلها فعلاً
+        window.onerror = function(msg, url) {
+            if (url.includes('cdnjs') || url.includes('unpkg')) {
+                document.getElementById('status-pill').innerText = "❌ خطأ في تحميل المكتبات! جرب متصفحاً آخر";
+                document.getElementById('status-pill').style.background = "#ef4444";
+                document.getElementById('status-pill').style.color = "#fff";
+            }
+        };
 
         function setup() {
-            // إنشاء مساحة الرسم
-            let canvas = createCanvas(480, 360);
-            canvas.parent('canvas-container');
+            // إنشاء مساحة الرسم للابتوب
+            const canvas = createCanvas(480, 360);
+            canvas.parent('camera-area');
 
-            // فتح كاميرا اللابتوب المتاحة
+            // فتح الكاميرا (الويب كام)
             video = createCapture(VIDEO);
             video.size(480, 360);
             video.hide();
 
-            // تحميل موديل COCO-SSD للتعرف التلقائي على الأشياء
-            objectDetector = ml5.objectDetector('cocossd', modelReady);
-        }
-
-        function modelReady() {
-            document.getElementById('status-msg').innerText = "✅ النظام جاهز! ضع الزجاجة أمام الكاميرا";
-            document.getElementById('status-msg').style.color = "#4caf50";
-            // تشغيل وظيفة الرصد المستمر
-            detectObjects();
-        }
-
-        function detectObjects() {
-            // نطلب من الموديل تحليل الفيديو
-            objectDetector.detect(video, (err, results) => {
-                if (err) {
-                    console.error(err);
-                    return;
-                }
-                detections = results;
+            // تحميل الموديل COCO-SSD
+            // نستخدم رابطاً داخلياً في المكتبة لتقليل أخطاء المسارات
+            detector = ml5.objectDetector('cocossd', () => {
+                isModelReady = true;
+                const pill = document.getElementById('status-pill');
+                pill.innerText = "✅ النظام جاهز! ضع الزجاجة أمام الكاميرا";
+                pill.style.background = "#064e3b";
+                pill.style.color = "#34d399";
                 
-                // تحديث سجل الجرد إذا تم رصد شيء
-                if (detections.length > 0) {
-                    addToLog(detections[0].label);
-                }
-                
-                // استمرار الرصد في حلقة لا نهائية
-                detectObjects();
+                // بدء الرصد التلقائي
+                performDetection();
             });
         }
 
-        function addToLog(label) {
-            let log = document.getElementById('inventory-log');
-            let time = new Date().toLocaleTimeString();
-            
-            // ترجمة بسيطة للنتائج المشهورة
-            let name = label;
-            if (label === 'bottle') name = "زجاجة مياه";
-            if (label === 'cell phone') name = "موبايل/هاتف";
-            if (label === 'person') name = "شخص (أنت)";
+        function performDetection() {
+            if (isModelReady) {
+                detector.detect(video, (err, results) => {
+                    if (!err) {
+                        detections = results;
+                        if (detections.length > 0) {
+                            updateInventory(detections[0].label);
+                        }
+                    }
+                    performDetection(); // حلقة لا نهائية للرصد التلقائي
+                });
+            }
+        }
 
-            // إضافة السطر للسجل في الأعلى
-            log.innerHTML = `<div>[${time}] تم رصد: ${name}</div>` + log.innerHTML;
+        function updateInventory(label) {
+            const logPanel = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            
+            // ترجمة بسيطة للنتائج
+            let arName = label;
+            if (label === 'bottle') arName = "زجاجة مياه";
+            if (label === 'cell phone') arName = "هاتف محمول";
+            if (label === 'person') arName = "شخص (أنت)";
+
+            // إضافة للسجل بدون تكرار ممل
+            const lastEntry = logPanel.firstChild.innerText || "";
+            if (!lastEntry.includes(arName)) {
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                div.innerText = `[${time}] رصد: ${arName}`;
+                logPanel.prepend(div);
+            }
         }
 
         function draw() {
-            // رسم الفيديو على اللوحة
+            // رسم ما تراه الكاميرا
             image(video, 0, 0, width, height);
 
-            // رسم المربعات والأسماء فوق الأشياء المكتشفة تلقائياً
+            // رسم المربعات حول الأجسام
             for (let i = 0; i < detections.length; i++) {
                 let obj = detections[i];
-                stroke(0, 255, 0);
+                stroke(59, 130, 246); // لون أزرق عصري
                 strokeWeight(4);
                 noFill();
-                rect(obj.x, obj.y, obj.width, obj.height);
+                rect(obj.x, obj.y, obj.width, obj.height, 8);
                 
                 noStroke();
-                fill(0, 255, 0);
-                textSize(20);
-                text(obj.label, obj.x + 10, obj.y + 24);
+                fill(59, 130, 246);
+                rect(obj.x, obj.y - 30, textWidth(obj.label) + 20, 30, 4);
+                fill(255);
+                textSize(16);
+                text(obj.label, obj.x + 10, obj.y - 8);
             }
         }
     </script>
