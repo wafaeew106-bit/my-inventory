@@ -3,116 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الجرد الذكي - نسخة الطوارئ</title>
+    <title>نظام جرد المحل الذكي - نسخة 2025</title>
     
-    <!-- محاولة تحميل المكتبة برابط مباشر وقوي جداً -->
-    <script src="cdn.jsdelivr.net"></script>
+    <!-- استدعاء مكتبة ml5.js وهي الأسهل والأضمن للعمل على المتصفحات دون أخطاء مسارات -->
+    <script src="cdnjs.cloudflare.com"></script>
+    <script src="unpkg.com"></script>
 
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 10px; }
-        #container { max-width: 500px; margin: auto; border: 2px solid #333; border-radius: 20px; padding: 15px; background: #111; }
-        #v-area { position: relative; width: 100%; border-radius: 15px; overflow: hidden; background: #222; }
-        video { width: 100%; display: block; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        button { background: #28a745; color: white; border: none; padding: 18px; font-size: 18px; border-radius: 12px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; }
-        button:disabled { background: #444; color: #888; }
-        #status { margin-top: 15px; font-size: 13px; color: #aaa; border-top: 1px solid #333; padding-top: 10px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        #canvas-container { border: 4px solid #333; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
+        #status { margin-top: 20px; padding: 10px 20px; border-radius: 50px; background: #333; font-size: 14px; color: #ffeb3b; }
+        .info-panel { margin-top: 15px; text-align: center; max-width: 400px; line-height: 1.6; color: #bbb; }
+        .detected-list { margin-top: 10px; color: #4caf50; font-weight: bold; font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <div id="container">
-        <h2>أداة جرد المحل 🛒</h2>
-        <div id="v-area">
-            <video id="web" autoplay playsinline></video>
-            <canvas id="out"></canvas>
-        </div>
-        <button id="btn" disabled>جاري تحضير المحرك...</button>
-        <div id="status">جاري الاتصال بسيرفرات جوجل...</div>
+    <h2>🛒 جرد المنتجات بالرؤية الحاسوبية</h2>
+    
+    <div id="canvas-container">
+        <!-- سيتم إنشاء الكاميرا والرسم هنا بواسطة السكربت -->
+    </div>
+
+    <div id="status">جاري تحميل مخ الذكاء الاصطناعي...</div>
+    
+    <div class="info-panel">
+        وجه الكاميرا نحو المنتج. سيتم التعرف على الصنف وتحديده آلياً.
+        <div id="item-name" class="detected-list">انتظار الرصد...</div>
     </div>
 
     <script>
-        const video = document.getElementById('web');
-        const canvas = document.getElementById('out');
-        const btn = document.getElementById('btn');
-        const status = document.getElementById('status');
-        const ctx = canvas.getContext('2d');
-        let objectDetector;
+        let video;
+        let detector;
+        let detections = [];
 
-        // دالة للتحقق من وجود المكتبة ومحاولة بديلة إذا فُقدت
-        async function setupAI() {
-            try {
-                // فحص وجود المكتبة (window.tasksVision)
-                if (typeof tasksVision === 'undefined') {
-                    status.innerText = "فشل المصدر الأول.. جاري تجربة مصدر بديل...";
-                    await loadScript("www.gstatic.com");
-                }
+        function setup() {
+            // إنشاء لوحة الرسم ووضعها داخل الحاوية
+            const canvas = createCanvas(320, 240);
+            canvas.parent('canvas-container');
 
-                const vision = window.tasksVision;
-                const wasmFiles = "cdn.jsdelivr.net";
+            // فتح كاميرا الموبايل الخلفية
+            video = createCapture({
+                video: { facingMode: "environment" },
+                audio: false
+            });
+            video.size(320, 240);
+            video.hide(); // إخفاء عنصر الفيديو الأصلي لإظهار الرسم فقط
+
+            // تحميل نموذج COCO-SSD للتعرف على الأشياء
+            // هذا النموذج مدمج ولن يعطيك أخطاء 404
+            detector = ml5.objectDetector('cocossd', modelReady);
+        }
+
+        function modelReady() {
+            document.getElementById('status').innerText = "✅ النظام جاهز! ابدأ الجرد الآن";
+            document.getElementById('status').style.color = "#4caf50";
+            // البدء في عملية الرصد
+            detector.detect(video, gotDetections);
+        }
+
+        function gotDetections(error, results) {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            detections = results;
+            
+            // تحديث اسم المنتج المكتشف في الأسفل
+            if (detections.length > 0) {
+                document.getElementById('item-name').innerText = "تم رصد: " + detections[0].label;
+            }
+
+            // الاستمرار في الرصد بشكل دائم
+            detector.detect(video, gotDetections);
+        }
+
+        function draw() {
+            // رسم ما تراه الكاميرا على اللوحة
+            image(video, 0, 0, width, height);
+
+            // رسم المربعات والأسماء فوق المنتجات المكتشفة
+            for (let i = 0; i < detections.length; i++) {
+                let object = detections[i];
                 
-                const filesetResolver = await vision.FilesetResolver.forVisionTasks(wasmFiles);
+                stroke(0, 255, 0);
+                strokeWeight(4);
+                noFill();
+                rect(object.x, object.y, object.width, object.height);
                 
-                objectDetector = await vision.ObjectDetector.createFromOptions(filesetResolver, {
-                    baseOptions: {
-                        modelAssetPath: "storage.googleapis.com",
-                        delegate: "GPU"
-                    },
-                    scoreThreshold: 0.5,
-                    runningMode: "VIDEO"
-                });
-
-                status.innerText = "تم الاتصال بنجاح! المحرك جاهز.";
-                status.style.color = "#4caf50";
-                btn.disabled = false;
-                btn.innerText = "إفتح الكاميرا وابدأ الجرد";
-
-            } catch (err) {
-                status.innerText = "خطأ في الشبكة: " + err.message;
-                status.style.color = "#ff4444";
+                noStroke();
+                fill(0, 255, 0);
+                textSize(16);
+                text(object.label, object.x, object.y - 10);
             }
         }
-
-        // دالة لتحميل السكربت يدوياً في حال فشل الـ HTML
-        function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                const s = document.createElement('script');
-                s.src = src;
-                s.onload = resolve;
-                s.onerror = reject;
-                document.head.appendChild(s);
-            });
-        }
-
-        btn.onclick = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
-                video.onloadeddata = () => {
-                    btn.style.display = "none";
-                    detect();
-                };
-            } catch (e) {
-                status.innerText = "خطأ: الكاميرا محجوبة!";
-            }
-        };
-
-        async function detect() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const results = await objectDetector.detectForVideo(video, Date.now());
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            results.detections.forEach(d => {
-                const { originX, originY, width, height } = d.boundingBox;
-                ctx.strokeStyle = "#00ff00"; ctx.lineWidth = 4;
-                ctx.strokeRect(originX, originY, width, height);
-                ctx.fillStyle = "#00ff00"; ctx.font = "bold 20px Arial";
-                ctx.fillText(d.categories[0].categoryName, originX, originY - 10);
-            });
-            requestAnimationFrame(detect);
-        }
-
-        window.onload = setupAI;
     </script>
 </body>
 </html>
