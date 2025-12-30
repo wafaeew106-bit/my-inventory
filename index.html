@@ -179,6 +179,66 @@
         }
 
         window.onload = init;
+
+
+        // 1. أضف هذا التعديل لضمان استخدام الكاميرا الخلفية للجوال بدلاً من الأمامية
+async function init() {
+    try {
+        const constraints = { 
+            video: { 
+                facingMode: "environment", // إجبار الكاميرا الخلفية
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            },
+            audio: true // طلب إذن الصوت صراحة
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        
+        // تأكيد تشغيل الفيديو باللمس للجوال
+        video.play(); 
+        
+        status.innerText = "✅ جاهز للعمل على الجوال";
+        setupVoice();
+        renderTable();
+        requestAnimationFrame(checkMotion);
+    } catch (err) {
+        status.innerText = "❌ تأكد من استخدام HTTPS ومنح الأذونات";
+        console.error(err);
+    }
+}
+
+// 2. تعديل معالجة الأخطاء في الصوت للجوال
+function setupVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'ar-EG';
+    recognition.continuous = false; // على الجوال يفضل جعلها false وإعادة التشغيل يدوياً
+
+    recognition.onresult = (event) => {
+        // التحقق الدقيق للجوال
+        if (event.results && event.results[0] && event.results[0][0]) {
+            const itemName = event.results[0][0].transcript.trim();
+            processJard(itemName);
+        }
+    };
+
+    recognition.onend = () => {
+        isListening = false;
+        // إذا توقف الصوت فجأة، نغير الحالة لتمكين الرصد بالحركة مجدداً
+        status.style.background = "#334155";
+    };
+
+    recognition.onerror = (event) => {
+        isListening = false;
+        console.log("Error logic:", event.error);
+        if(event.error === 'not-allowed') {
+            status.innerText = "❌ تم رفض إذن الميكروفون";
+        }
+    };
+}
+
     </script>
 </body>
 </html>
+
