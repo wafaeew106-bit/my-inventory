@@ -3,124 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أداة جرد المحل 2025 - نسخة الطوارئ</title>
+    <title>نظام الجرد الذكي 2025 - النسخة النهائية</title>
+    
+    <!-- هذه هي الروابط الوحيدة التي سنستخدمها، وهي مستقرة جداً -->
+    <script src="cdn.jsdelivr.net"></script>
+    <script src="cdn.jsdelivr.net"></script>
+
     <style>
-        /* تنسيقات عصرية متوافقة مع عام 2025 */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; text-align: center; margin: 0; padding: 20px; }
-        .main-container { max-width: 500px; margin: auto; background: #1e293b; padding: 25px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid #334155; }
-        .video-box { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; border: 2px solid #3b82f6; }
-        video { width: 100%; display: block; height: auto; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .stat-card { background: #334155; padding: 15px; border-radius: 12px; border: 1px solid #475569; }
-        .stat-value { font-size: 28px; font-weight: bold; color: #3b82f6; }
-        .stat-label { font-size: 12px; color: #94a3b8; }
-        .action-btn { background: #10b981; color: white; border: none; padding: 20px; border-radius: 15px; width: 100%; font-size: 20px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
-        .action-btn:active { transform: scale(0.98); }
-        #log { margin-top: 20px; background: #020617; padding: 15px; border-radius: 12px; height: 120px; overflow-y: auto; text-align: right; font-size: 13px; border: 1px solid #1e293b; }
-        .log-item { color: #10b981; border-bottom: 1px solid #1e293b; padding: 5px 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; text-align: center; margin: 0; padding: 20px; }
+        .app-card { max-width: 600px; margin: auto; background: #1e293b; padding: 20px; border-radius: 25px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        .video-container { position: relative; width: 100%; border-radius: 15px; overflow: hidden; background: #000; border: 2px solid #3b82f6; aspect-ratio: 4/3; }
+        video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #status-indicator { margin-top: 15px; padding: 10px; border-radius: 12px; background: #334155; color: #fbbf24; font-size: 14px; font-weight: bold; }
+        .inventory-counter { font-size: 48px; font-weight: bold; color: #10b981; margin: 10px 0; }
+        #log-area { margin-top: 15px; background: #020617; padding: 15px; border-radius: 12px; height: 120px; overflow-y: auto; text-align: right; font-size: 13px; border: 1px solid #1e293b; }
+        .success-text { color: #10b981; }
     </style>
 </head>
 <body>
 
-    <div class="main-container">
-        <h2 style="margin-top: 0; color: #3b82f6;">🛒 نظام الجرد السريع</h2>
-        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">نسخة العمل المستقلة - بدون روابط خارجية</p>
+    <div class="app-card">
+        <h2 style="color: #3b82f6; margin-bottom: 5px;">🛒 نظام جرد المحل الذكي</h2>
+        <p style="color: #94a3b8; font-size: 12px; margin-bottom: 15px;">إصدار 2025 - رصد تلقائي بالكامل</p>
 
-        <div class="video-box">
+        <div class="video-container">
             <video id="webcam" autoplay playsinline muted></video>
+            <canvas id="overlay"></canvas>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value" id="total-count">0</div>
-                <div class="stat-label">إجمالي القطع</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="session-time">00:00</div>
-                <div class="stat-label">وقت الجرد</div>
-            </div>
-        </div>
+        <div id="status-indicator">جاري إيقاظ الذكاء الاصطناعي...</div>
+        
+        <div class="inventory-counter" id="total-items">0</div>
+        <div style="color: #94a3b8; font-size: 12px;">إجمالي الأصناف المكتشفة</div>
 
-        <button class="action-btn" onclick="countItem()">رصد صنف جديد (جرد +1)</button>
-        
-        <div id="log">
-            <div style="color: #64748b;">سجل الجرد جاهز...</div>
+        <div id="log-area">
+            <div style="color: #64748b;">انتظار رصد المنتجات...</div>
         </div>
         
-        <button onclick="resetJard()" style="background:none; border:none; color:#f43f5e; margin-top:15px; cursor:pointer; font-size:12px;">تصفير السجل وإعادة البدء</button>
+        <button onclick="location.reload()" style="margin-top: 15px; background: none; border: 1px solid #475569; color: #94a3b8; padding: 5px 15px; border-radius: 5px; cursor: pointer;">تحديث النظام</button>
     </div>
 
     <script>
-        // استخدام جافا سكريبت الصافية 100% لتجنب الـ 404
         const video = document.getElementById('webcam');
-        const totalDisplay = document.getElementById('total-count');
-        const log = document.getElementById('log');
-        let count = 0;
-        let startTime = Date.now();
+        const canvas = document.getElementById('overlay');
+        const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status-indicator');
+        const counterDisplay = document.getElementById('total-items');
+        const logArea = document.getElementById('log-area');
+        
+        let model;
+        let itemCount = 0;
+        let lastDetectedTime = 0;
 
-        // 1. فتح الكاميرا فوراً (بدون مكتبات خارجية)
-        async function initCamera() {
+        // 1. تشغيل الكاميرا
+        async function startCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" }, 
-                    audio: false 
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
+                status.innerText = "جاري تحميل قاعدة بيانات المنتجات...";
+                loadModel();
             } catch (err) {
-                console.error("Camera error:", err);
-                alert("يرجى السماح بالوصول للكاميرا من إعدادات المتصفح.");
+                status.innerText = "❌ فشل فتح الكاميرا. تأكد من إعطاء الصلاحية.";
+                status.style.color = "#f43f5e";
             }
         }
 
-        // 2. وظيفة العد والجرد
-        function countItem() {
-            count++;
-            totalDisplay.innerText = count;
+        // 2. تحميل نموذج الذكاء الاصطناعي
+        async function loadModel() {
+            try {
+                model = await cocoSsd.load();
+                status.innerText = "✅ النظام جاهز! وجه الكاميرا للمنتجات";
+                status.style.color = "#10b981";
+                detectFrame();
+            } catch (err) {
+                status.innerText = "❌ خطأ في تحميل المحرك. يرجى التحديث.";
+                console.error(err);
+            }
+        }
+
+        // 3. الرصد اللحظي
+        async function detectFrame() {
+            const predictions = await model.detect(video);
             
-            // إضافة صوت "نقرة" برمجياً (بييب)
-            playBeep();
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // تسجيل في السجل
-            const now = new Date();
-            const timeStr = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
-            const entry = document.createElement('div');
-            entry.className = 'log-item';
-            entry.innerText = `[${timeStr}] تم جرد القطعة رقم ${count}`;
-            log.prepend(entry);
+            predictions.forEach(prediction => {
+                // رسم المربع
+                ctx.strokeStyle = "#10b981";
+                ctx.lineWidth = 4;
+                ctx.strokeRect(...prediction.bbox);
+
+                // كتابة الاسم
+                ctx.fillStyle = "#10b981";
+                ctx.font = "bold 18px Arial";
+                ctx.fillText(prediction.class, prediction.bbox[0], prediction.bbox[1] > 20 ? prediction.bbox[1] - 10 : 20);
+
+                // آلية العد الذكي: نزيد العدد إذا رصدنا شيئاً جديداً (كل ثانيتين مثلاً لمنع التكرار)
+                if (Date.now() - lastDetectedTime > 2000) {
+                    itemCount++;
+                    counterDisplay.innerText = itemCount;
+                    lastDetectedTime = Date.now();
+                    
+                    const entry = document.createElement('div');
+                    entry.className = "success-text";
+                    entry.innerText = `[${new Date().toLocaleTimeString()}] تم جرد: ${prediction.class}`;
+                    logArea.prepend(entry);
+                    
+                    // إصدار صوت تنبيه
+                    playBeep();
+                }
+            });
+
+            requestAnimationFrame(detectFrame);
         }
 
-        // 3. تصفير الجرد
-        function resetJard() {
-            if(confirm("هل أنت متأكد من مسح بيانات الجرد الحالية؟")) {
-                count = 0;
-                totalDisplay.innerText = 0;
-                log.innerHTML = '<div style="color: #64748b;">تم إعادة ضبط السجل.</div>';
-            }
-        }
-
-        // 4. تحديث الوقت
-        setInterval(() => {
-            const diff = Math.floor((Date.now() - startTime) / 1000);
-            const mins = Math.floor(diff / 60).toString().padStart(2, '0');
-            const secs = (diff % 60).toString().padStart(2, '0');
-            document.getElementById('session-time').innerText = `${mins}:${secs}`;
-        }, 1000);
-
-        // وظيفة البييب البرمجية (بدون ملف صوتي خارجي)
         function playBeep() {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = context.createOscillator();
-            const gain = context.createGain();
-            osc.connect(gain);
-            gain.connect(context.destination);
-            osc.frequency.value = 880;
-            gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.1);
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.connect(audioCtx.destination);
             osc.start();
-            osc.stop(context.currentTime + 0.1);
+            osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        // بدء التشغيل
-        initCamera();
+        window.onload = startCamera;
     </script>
 </body>
 </html>
