@@ -3,130 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الجرد الذكي - نسخة اللابتوب النهائية</title>
+    <title>نظام الجرد الذكي - نسخة اللابتوب 2025</title>
     
-    <!-- روابط كاملة ومحمية ببروتوكول صريح لمنع المتصفح من توجيهها لمجلداتك -->
-    <script src="cdnjs.cloudflare.com" crossorigin="anonymous"></script>
-    <script src="unpkg.com" crossorigin="anonymous"></script>
+    <!-- تم تغيير طريقة الكتابة لضمان عدم حدوث خطأ 404 -->
+    <script src="cdnjs.cloudflare.com" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="unpkg.com" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; color: #f8fafc; text-align: center; margin: 0; padding: 20px; }
-        .main-card { max-width: 600px; margin: auto; background: #1e293b; padding: 25px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid #334155; }
-        #camera-area { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; border: 2px solid #3b82f6; line-height: 0; }
-        canvas { width: 100% !important; height: auto !important; }
-        #status-pill { display: inline-block; margin-top: 20px; padding: 8px 20px; border-radius: 50px; background: #334155; color: #fbbf24; font-weight: 600; font-size: 14px; transition: all 0.5s; }
-        .log-panel { margin-top: 20px; background: #020617; border-radius: 12px; padding: 15px; height: 120px; overflow-y: auto; text-align: right; border: 1px solid #1e293b; font-family: 'Courier New', monospace; }
-        .log-entry { border-bottom: 1px solid #1e293b; padding: 5px 0; color: #10b981; font-size: 13px; }
+        body { font-family: sans-serif; background: #0f172a; color: white; text-align: center; margin: 0; padding: 20px; }
+        .camera-container { position: relative; display: inline-block; border: 5px solid #3b82f6; border-radius: 20px; overflow: hidden; background: #000; }
+        #status { margin-top: 15px; padding: 10px; background: #1e293b; border-radius: 10px; color: #fbbf24; font-weight: bold; }
+        .log-box { margin-top: 20px; background: #000; color: #10b981; padding: 15px; border-radius: 10px; height: 120px; overflow-y: auto; text-align: right; border: 1px solid #334155; }
     </style>
 </head>
 <body>
 
-    <div class="main-card">
-        <h2 style="margin-top: 0; color: #3b82f6;">🛒 جرد المحل (ذكاء اصطناعي)</h2>
-        <p style="color: #94a3b8; font-size: 14px;">نسخة التجربة على اللابتوب - رصد تلقائي</p>
+    <h2>🛒 جرد المحل بالذكاء الاصطناعي (لابتوب)</h2>
+    
+    <div class="camera-container" id="video-box">
+        <!-- الكاميرا ستظهر هنا -->
+    </div>
 
-        <div id="camera-area">
-            <!-- ستظهر الكاميرا هنا -->
-        </div>
+    <div id="status">جاري تحضير "مخ" النظام... انتظر قليلاً</div>
 
-        <div id="status-pill">جاري استدعاء العقل الاصطناعي...</div>
-
-        <div class="log-panel" id="log">
-            <div style="color: #64748b;">انتظار رصد الأصناف...</div>
-        </div>
+    <div class="log-box" id="log">
+        <b>سجل الجرد اللحظي:</b><br>
     </div>
 
     <script>
         let video;
         let detector;
         let detections = [];
-        let isModelReady = false;
 
-        // دالة سحرية للتأكد من أن المكتبات تم تحميلها فعلاً
-        window.onerror = function(msg, url) {
-            if (url.includes('cdnjs') || url.includes('unpkg')) {
-                document.getElementById('status-pill').innerText = "❌ خطأ في تحميل المكتبات! جرب متصفحاً آخر";
-                document.getElementById('status-pill').style.background = "#ef4444";
-                document.getElementById('status-pill').style.color = "#fff";
-            }
-        };
-
+        // دالة Setup من مكتبة p5.js
         function setup() {
-            // إنشاء مساحة الرسم للابتوب
+            // إنشاء لوحة الرسم
             const canvas = createCanvas(480, 360);
-            canvas.parent('camera-area');
+            canvas.parent('video-box');
 
-            // فتح الكاميرا (الويب كام)
-            video = createCapture(VIDEO);
+            // فتح كاميرا الويب للابتوب بشكل مباشر
+            video = createCapture(VIDEO, function(stream) {
+                console.log("الكاميرا فتحت بنجاح");
+                document.getElementById('status').innerText = "✅ الكاميرا تعمل.. جاري تحميل الذكاء الاصطناعي...";
+            });
             video.size(480, 360);
             video.hide();
 
-            // تحميل الموديل COCO-SSD
-            // نستخدم رابطاً داخلياً في المكتبة لتقليل أخطاء المسارات
-            detector = ml5.objectDetector('cocossd', () => {
-                isModelReady = true;
-                const pill = document.getElementById('status-pill');
-                pill.innerText = "✅ النظام جاهز! ضع الزجاجة أمام الكاميرا";
-                pill.style.background = "#064e3b";
-                pill.style.color = "#34d399";
+            // تحميل الموديل COCO-SSD للتعرف على الأشياء
+            detector = ml5.objectDetector('cocossd', modelReady);
+        }
+
+        function modelReady() {
+            document.getElementById('status').innerText = "✅ النظام جاهز! وجه الزجاجة للكاميرا";
+            document.getElementById('status').style.color = "#4caf50";
+            // البدء في عملية الرصد التلقائي
+            detect();
+        }
+
+        function detect() {
+            detector.detect(video, (err, results) => {
+                if (err) return;
+                detections = results;
                 
-                // بدء الرصد التلقائي
-                performDetection();
+                // تحديث السجل إذا تم رصد زجاجة أو غيرها
+                if (detections.length > 0) {
+                    addToLog(detections[0].label);
+                }
+                
+                detect(); // استمرار الرصد
             });
         }
 
-        function performDetection() {
-            if (isModelReady) {
-                detector.detect(video, (err, results) => {
-                    if (!err) {
-                        detections = results;
-                        if (detections.length > 0) {
-                            updateInventory(detections[0].label);
-                        }
-                    }
-                    performDetection(); // حلقة لا نهائية للرصد التلقائي
-                });
-            }
-        }
-
-        function updateInventory(label) {
-            const logPanel = document.getElementById('log');
+        function addToLog(label) {
+            const log = document.getElementById('log');
             const time = new Date().toLocaleTimeString();
+            let name = label === 'bottle' ? "زجاجة مياه" : label;
             
-            // ترجمة بسيطة للنتائج
-            let arName = label;
-            if (label === 'bottle') arName = "زجاجة مياه";
-            if (label === 'cell phone') arName = "هاتف محمول";
-            if (label === 'person') arName = "شخص (أنت)";
-
-            // إضافة للسجل بدون تكرار ممل
-            const lastEntry = logPanel.firstChild.innerText || "";
-            if (!lastEntry.includes(arName)) {
-                const div = document.createElement('div');
-                div.className = 'log-entry';
-                div.innerText = `[${time}] رصد: ${arName}`;
-                logPanel.prepend(div);
+            // تجنب التكرار الممل في السجل
+            if (!log.innerHTML.includes(name + " " + time.slice(0, -2))) {
+                log.innerHTML = `<div>[${time}] تم رصد: ${name}</div>` + log.innerHTML;
             }
         }
 
         function draw() {
-            // رسم ما تراه الكاميرا
+            // رسم الفيديو
             image(video, 0, 0, width, height);
 
-            // رسم المربعات حول الأجسام
+            // رسم المربعات حول الأشياء
             for (let i = 0; i < detections.length; i++) {
                 let obj = detections[i];
-                stroke(59, 130, 246); // لون أزرق عصري
+                stroke(0, 255, 0);
                 strokeWeight(4);
                 noFill();
-                rect(obj.x, obj.y, obj.width, obj.height, 8);
+                rect(obj.x, obj.y, obj.width, obj.height);
                 
                 noStroke();
-                fill(59, 130, 246);
-                rect(obj.x, obj.y - 30, textWidth(obj.label) + 20, 30, 4);
-                fill(255);
-                textSize(16);
-                text(obj.label, obj.x + 10, obj.y - 8);
+                fill(0, 255, 0);
+                textSize(18);
+                text(obj.label, obj.x + 5, obj.y + 20);
             }
         }
     </script>
