@@ -3,155 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الجرد الذكي - التعرف البصري 2025</title>
+    <title>نظام الجرد الذكي - نسخة 2025 النهائية</title>
     
-    <!-- مكتبات الذكاء الاصطناعي الأساسية -->
-    <script src="cdn.jsdelivr.net"></script>
-    <script src="cdn.jsdelivr.net"></script>
-    <script src="cdn.jsdelivr.net"></script>
+    <!-- استخدام روابط جوجل الرسمية التي نادراً ما تُحظر لتجنب خطأ 404 -->
+    <script src="www.gstatic.com"></script>
+    <script src="www.gstatic.com"></script>
 
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; text-align: center; margin: 0; padding: 10px; }
-        .app-container { max-width: 800px; margin: auto; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
-        #video-box { position: relative; background: #000; border-radius: 15px; overflow: hidden; border: 3px solid #3b82f6; }
-        video { width: 100%; height: auto; }
-        .controls { background: #1e293b; padding: 20px; border-radius: 15px; border: 1px solid #334155; }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: none; }
-        button { width: 100%; padding: 12px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; }
-        .train-btn { background: #f59e0b; color: white; }
-        .inventory-list { background: #020617; padding: 15px; border-radius: 15px; text-align: right; height: 300px; overflow-y: auto; }
-        .item-row { display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; padding: 10px 0; color: #10b981; }
-        #status-bar { grid-column: span 2; background: #334155; padding: 10px; border-radius: 10px; color: #fbbf24; margin-bottom: 10px; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f172a; color: #f1f5f9; text-align: center; margin: 0; padding: 20px; }
+        .main-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1000px; margin: auto; }
+        #video-wrap { position: relative; background: #000; border-radius: 20px; overflow: hidden; border: 3px solid #3b82f6; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        video { width: 100%; display: block; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .side-panel { background: #1e293b; padding: 20px; border-radius: 20px; border: 1px solid #334155; display: flex; flex-direction: column; }
+        .inventory-table { flex-grow: 1; background: #020617; border-radius: 12px; margin-top: 15px; padding: 10px; overflow-y: auto; text-align: right; }
+        .item-row { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #1e293b; color: #10b981; font-weight: bold; }
+        #status { background: #334155; padding: 10px; border-radius: 50px; color: #fbbf24; font-size: 14px; margin-bottom: 15px; font-weight: bold; }
+        .total-badge { font-size: 30px; color: #3b82f6; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <h2>🚀 نظام الجرد بالتعرف البصري (بدون باركود)</h2>
+    <h2 style="color: #3b82f6;">🛒 نظام الجرد التلقائي بالرؤية الحاسوبية</h2>
     
-    <div class="app-container">
-        <div id="status-bar">جاري تحميل "العقل الاصطناعي" لمسح المنتجات...</div>
-
-        <div id="video-box">
+    <div class="main-grid">
+        <div id="video-wrap">
             <video id="webcam" autoplay playsinline muted></video>
+            <canvas id="overlay"></canvas>
         </div>
 
-        <div class="controls">
-            <h4>1. تعريف صنف جديد</h4>
-            <input type="text" id="item-name" placeholder="اكتب اسم المنتج (مثلاً: زيت عافية)">
-            <button class="train-btn" onmousedown="train(true)" onmouseup="train(false)">اضغط باستمرار للتعريف (تصوير)</button>
-            <p style="font-size: 11px; color: #94a3b8;">* ضع المنتج أمام الكاميرا واضغط لثانيتين</p>
+        <div class="side-panel">
+            <div id="status">جاري إيقاظ "عقل" النظام...</div>
+            <div class="total-badge">إجمالي: <span id="total-qty">0</span></div>
             
-            <hr style="border: 0.5px solid #334155;">
-            
-            <h4>2. سجل الجرد التلقائي</h4>
-            <div id="inventory-table" class="inventory-list">
+            <div style="font-size: 12px; color: #94a3b8;">الأصناف المكتشفة حالياً:</div>
+            <div id="inventory-list" class="inventory-table">
                 <!-- المنتجات ستظهر هنا تلقائياً -->
             </div>
+            
+            <button onclick="downloadInventory()" style="margin-top: 15px; padding: 10px; background: #10b981; border: none; color: white; border-radius: 8px; cursor: pointer;">تحميل تقرير الجرد</button>
         </div>
     </div>
 
     <script>
         const video = document.getElementById('webcam');
-        const itemNameInput = document.getElementById('item-name');
-        const statusBar = document.getElementById('status-bar');
-        const inventoryTable = document.getElementById('inventory-table');
+        const canvas = document.getElementById('overlay');
+        const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status');
+        const list = document.getElementById('inventory-list');
+        const totalQty = document.getElementById('total-qty');
         
-        let classifier;
-        let net;
-        let isTraining = false;
-        let inventory = {}; // تخزين الأعداد { "اسم المنتج": العدد }
-
-        async function init() {
-            statusBar.innerText = "جاري الاتصال بسيرفرات جوجل لتحميل المحرك...";
-            
-            // تحميل مصنف KNN ونموذج MobileNet
-            classifier = knnClassifier.create();
-            net = await mobilenet.load();
-
-            statusBar.innerText = "✅ النظام جاهز! قم بتعريف أول منتج الآن";
-            
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            
-            animate();
-        }
-
-        // وظيفة التدريب (تعريف المنتج بالصور)
-        async function train(pressing) {
-            isTraining = pressing;
-            if (pressing && itemNameInput.value === "") {
-                alert("يرجى كتابة اسم المنتج أولاً!");
-                isTraining = false;
-            }
-        }
-
-        async function animate() {
-            if (net) {
-                const img = tf.browser.fromPixels(video);
-                const activation = net.infer(img, 'conv_preds');
-
-                // إذا كنا نضغط على زر التعريف، نضيف الصور للمصنف
-                if (isTraining) {
-                    classifier.addExample(activation, itemNameInput.value);
-                    if (!inventory[itemNameInput.value]) {
-                        inventory[itemNameInput.value] = 0;
-                        updateTable();
-                    }
-                    statusBar.innerText = "جاري حفظ شكل المنتج: " + itemNameInput.value;
-                }
-
-                // إذا كان المصنف يحتوي على بيانات، نبدأ التوقع التلقائي
-                if (classifier.getNumClasses() > 0) {
-                    const result = await classifier.predictClass(activation);
-                    const { label, confidences } = result;
-
-                    // إذا كان النظام متأكداً بنسبة أكثر من 90%
-                    if (confidences[label] > 0.95) {
-                        handleAutoCount(label);
-                    }
-                }
-                img.dispose();
-            }
-            requestAnimationFrame(animate);
-        }
-
+        let model;
+        let inventory = {}; // تخزين البيانات { "اسم الصنف": العدد }
         let lastDetected = "";
         let lastTime = 0;
 
-        function handleAutoCount(label) {
-            const now = Date.now();
-            // منع تكرار العد لنفس المنتج في أقل من 3 ثوانٍ
-            if (label !== lastDetected || now - lastTime > 3000) {
-                inventory[label]++;
-                lastDetected = label;
-                lastTime = now;
-                playBeep();
-                updateTable();
-                statusBar.innerText = "✅ تم جرد: " + label;
+        // 1. تشغيل الكاميرا وتحميل الذكاء الاصطناعي
+        async function startApp() {
+            try {
+                // التأكد من تحميل المكتبات
+                if (typeof cocoSsd === 'undefined') {
+                    status.innerText = "❌ فشل تحميل المكتبات من جوجل. يرجى التحديث.";
+                    return;
+                }
+
+                status.innerText = "جاري تحميل محرك الرصد...";
+                model = await cocoSsd.load();
+                status.innerText = "✅ النظام جاهز! مرر المنتجات أمام الكاميرا";
+                status.style.color = "#4caf50";
+
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                
+                video.onloadeddata = () => {
+                    detectFrame();
+                };
+            } catch (err) {
+                status.innerText = "خطأ: " + err.message;
             }
         }
 
-        function updateTable() {
-            inventoryTable.innerHTML = "";
+        // 2. تحليل الفيديو ورسم المربعات والعد التلقائي
+        async function detectFrame() {
+            const predictions = await model.detect(video);
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            predictions.forEach(p => {
+                // رسم المربع حول المنتج
+                ctx.strokeStyle = "#10b981";
+                ctx.lineWidth = 4;
+                ctx.strokeRect(...p.bbox);
+
+                // كتابة اسم الصنف المكتشف
+                ctx.fillStyle = "#10b981";
+                ctx.font = "bold 18px Arial";
+                ctx.fillText(p.class, p.bbox[0], p.bbox[1] > 20 ? p.bbox[1] - 10 : 20);
+
+                // منطق الجرد التلقائي:
+                // إذا كان النظام متأكداً بنسبة أكثر من 60% والمنتج استقر أمام الكاميرا
+                if (p.score > 0.60) {
+                    processInventory(p.class);
+                }
+            });
+
+            requestAnimationFrame(detectFrame);
+        }
+
+        // 3. وظيفة العد والفرز لكل صنف على حدة
+        function processInventory(itemName) {
+            const now = Date.now();
+            
+            // نمنع العد المتكرر لنفس الصنف إلا بعد مرور ثانيتين (لتجنب الخطأ)
+            if (itemName !== lastDetected || (now - lastTime > 2000)) {
+                if (!inventory[itemName]) inventory[itemName] = 0;
+                
+                inventory[itemName]++;
+                lastDetected = itemName;
+                lastTime = now;
+                
+                playBeep();
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            list.innerHTML = "";
+            let total = 0;
             for (let name in inventory) {
+                total += inventory[name];
                 const row = document.createElement('div');
                 row.className = 'item-row';
-                row.innerHTML = `<span>${name}</span> <span>العدد: ${inventory[name]}</span>`;
-                inventoryTable.appendChild(row);
+                row.innerHTML = `<span>${name}</span> <span>${inventory[name]}</span>`;
+                list.appendChild(row);
             }
+            totalQty.innerText = total;
         }
 
         function playBeep() {
-            const context = new AudioContext();
-            const osc = context.createOscillator();
-            osc.type = 'sine';
-            osc.frequency.value = 1000;
-            osc.connect(context.destination);
-            osc.start();
-            osc.stop(context.currentTime + 0.1);
+            const a = new (window.AudioContext || window.webkitAudioContext)();
+            const o = a.createOscillator();
+            const g = a.createGain();
+            o.connect(g);
+            g.connect(a.destination);
+            o.start();
+            o.stop(a.currentTime + 0.1);
         }
 
-        init();
+        function downloadInventory() {
+            let csv = "الصنف,الكمية\n";
+            for (let name in inventory) csv += `${name},${inventory[name]}\n`;
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'inventory_report.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        startApp();
     </script>
 </body>
 </html>
