@@ -3,149 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام جرد المحل 2025 - النسخة المستقلة</title>
+    <title>نظام الجرد الذكي - قاريء الأسماء 2025</title>
+    
+    <!-- استدعاء مكتبة Tesseract لقراءة النصوص من سيرفر بديل مستقر -->
+    <script src="cdn.jsdelivr.net"></script>
+
     <style>
-        /* تصميم احترافي لمحلك */
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f172a; color: #f1f5f9; text-align: center; margin: 0; padding: 20px; }
-        .jard-container { max-width: 900px; margin: auto; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
-        #camera-feed { position: relative; background: #000; border-radius: 20px; overflow: hidden; border: 4px solid #3b82f6; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f172a; color: white; text-align: center; margin: 0; padding: 10px; }
+        .jard-wrapper { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1fr 350px; gap: 15px; }
+        #cam-container { position: relative; background: #000; border-radius: 20px; overflow: hidden; border: 3px solid #3b82f6; }
         video { width: 100%; display: block; }
+        #scan-flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; transition: 0.1s; }
         .side-panel { background: #1e293b; padding: 20px; border-radius: 20px; border: 1px solid #334155; }
-        .stat-card { background: #020617; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .count-value { font-size: 40px; color: #10b981; font-weight: bold; }
-        #event-log { background: #020617; padding: 10px; height: 250px; overflow-y: auto; text-align: right; font-size: 13px; border-radius: 10px; color: #34d399; }
-        .btn-action { background: #3b82f6; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        #status-tag { color: #fbbf24; font-weight: bold; margin-bottom: 10px; display: block; }
+        .inventory-log { background: #020617; padding: 10px; height: 350px; overflow-y: auto; text-align: right; border-radius: 10px; border: 1px solid #334155; font-family: monospace; }
+        .item-entry { color: #10b981; padding: 8px; border-bottom: 1px solid #1e293b; font-size: 14px; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .status-pill { display: inline-block; padding: 5px 15px; border-radius: 50px; background: #334155; color: #fbbf24; font-size: 12px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <h2 style="color: #3b82f6;">🛒 نظام الجرد الذكي (إصدار العمل المستقل 2025)</h2>
-    <span id="status-tag">النظام جاهز للعمل بدون إنترنت ✅</span>
+    <h2 style="color: #3b82f6;">🛒 نظام الجرد الذكي (قاريء النصوص التلقائي)</h2>
+    <div id="status" class="status-pill">جاري تجهيز محرك القراءة البصرية...</div>
 
-    <div class="jard-container">
-        <div id="camera-feed">
+    <div class="jard-wrapper">
+        <div id="cam-container">
             <video id="webcam" autoplay playsinline muted></video>
-            <!-- طبقة ذكية لرصد الحركة -->
-            <div id="motion-detector" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
+            <div id="scan-flash"></div>
+            <!-- إطار توجيه المنتج -->
+            <div style="position:absolute; top:20%; left:10%; width:80%; height:60%; border:2px dashed #fbbf24; border-radius:10px; pointer-events:none;">
+                <span style="color:#fbbf24; font-size:12px; background:rgba(0,0,0,0.5); padding:2px;">ضع اسم المنتج هنا</span>
+            </div>
         </div>
 
         <div class="side-panel">
-            <div class="stat-card">
-                <div class="stat-label">إجمالي البنود المجرودة</div>
-                <div class="count-value" id="total-items">0</div>
+            <div style="font-size: 14px; color: #94a3b8; margin-bottom: 10px;">إجمالي الأصناف المكتشفة: <b id="total-count" style="color:#10b981; font-size:20px;">0</b></div>
+            <div class="inventory-log" id="log">
+                <div style="color: #475569; text-align: center;">وجه المنتج لقراءة اسمه...</div>
             </div>
-
-            <button class="btn-action" onclick="resetJard()">إعادة بدء الجرد</button>
-            <button class="btn-action" style="background:#10b981;" onclick="downloadReport()">تحميل تقرير (Excel)</button>
-
-            <div id="event-log">
-                <b>سجل حركة البضائع:</b><br>
-            </div>
+            <button onclick="downloadReport()" style="margin-top: 10px; width: 100%; padding: 10px; background: #10b981; border: none; color: white; border-radius: 8px; cursor: pointer;">تحميل التقرير</button>
         </div>
     </div>
 
-    <script>
-        // هذا الكود لا يطلب أي مكتبات خارجية لتجنب أخطاء 404
-        const video = document.getElementById('webcam');
-        const totalDisplay = document.getElementById('total-items');
-        const log = document.getElementById('event-log');
-        let itemCount = 0;
-        let isProcessing = false;
+    <!-- إضافة كانفاس مخفي لمعالجة الصور -->
+    <canvas id="proc-canvas" style="display:none;"></canvas>
 
-        // 1. فتح الكاميرا فوراً وبدون مكتبات
-        async function initCamera() {
+    <script>
+        const video = document.getElementById('webcam');
+        const log = document.getElementById('log');
+        const totalDisp = document.getElementById('total-count');
+        const status = document.getElementById('status');
+        const flash = document.getElementById('scan-flash');
+        const canvas = document.getElementById('proc-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let isScanning = false;
+        let totalItems = 0;
+        let lastDetectedText = "";
+
+        // 1. تشغيل الكاميرا والمحرك
+        async function init() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" } 
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
-                // البدء في رصد "التمرير" تلقائياً
-                setInterval(autoDetectMotion, 100); 
+                status.innerText = "✅ النظام جاهز! مرر المنتج لقراءة اسمه";
+                
+                // بدء رصد الحركة للتصوير التلقائي
+                setInterval(detectMotionAndScan, 200);
             } catch (err) {
-                alert("يرجى إعطاء صلاحية الكاميرا للابتوب");
+                status.innerText = "❌ خطأ: يرجى السماح بالكاميرا";
             }
         }
 
-        // 2. تقنية "رصد التمرير" (Motion Detection)
-        // هذه التقنية تعمل كبديل ذكي وسريع للذكاء الاصطناعي الثقيل المحجوب لديك
+        // 2. رصد الحركة والتقاط الصورة
         let lastFrame;
-        function autoDetectMotion() {
-            if (isProcessing) return;
+        async function detectMotionAndScan() {
+            if (isScanning) return;
 
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth / 10;
-            canvas.height = video.videoHeight / 10;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const currentFrame = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            // معاينة الحركة (نفس فكرة الكود السابق)
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 48; tempCanvas.height = 36;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(video, 0, 0, 48, 36);
+            const currentFrame = tempCtx.getImageData(0, 0, 48, 36).data;
 
             if (lastFrame) {
                 let diff = 0;
                 for (let i = 0; i < currentFrame.length; i += 4) {
                     diff += Math.abs(currentFrame[i] - lastFrame[i]);
                 }
-                
-                // إذا مر شيء أمام الكاميرا (تغيرت الإضاءة بنسبة كبيرة)
-                if (diff > 50000) { 
-                    handleCount();
+
+                if (diff > 15000) { // تم رصد تمرير منتج
+                    performOCR();
                 }
             }
             lastFrame = currentFrame;
         }
 
-        function handleCount() {
-            isProcessing = true;
-            itemCount++;
-            totalDisplay.innerText = itemCount;
+        // 3. قراءة النص من المنتج (OCR)
+        async function performOCR() {
+            isScanning = true;
+            status.innerText = "⏳ جاري قراءة اسم المنتج...";
             
-            playBeep();
-            addToLog();
+            // تأثير الفلاش البصري
+            flash.style.opacity = "0.8";
+            setTimeout(() => flash.style.opacity = "0", 100);
 
-            // منع العد المتكرر لنفس القطعة (انتظار ثانية قبل القطعة التالية)
-            setTimeout(() => { isProcessing = false; }, 1500);
+            // التقاط صورة عالية الجودة للاسم
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+
+            try {
+                // استخدام Tesseract لقراءة النص (يدعم العربية والإنجليزية)
+                const result = await Tesseract.recognize(canvas, 'ara+eng', {
+                    logger: m => console.log(m)
+                });
+
+                const text = result.data.text.trim();
+                
+                if (text.length > 2) {
+                    processDetectedItem(text);
+                } else {
+                    status.innerText = "⚠️ لم أستطع قراءة الاسم بوضوح، حاول ثانية";
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            // انتظار 2 ثانية قبل السماح بمسح منتج آخر (لمنع التكرار)
+            setTimeout(() => {
+                isScanning = false;
+                status.innerText = "✅ مرر المنتج التالي";
+            }, 2000);
         }
 
-        function addToLog() {
-            const time = new Date().toLocaleTimeString();
+        function processDetectedItem(rawText) {
+            // تنظيف النص من الرموز الغريبة
+            const cleanText = rawText.replace(/[^\w\sآ-ي]/gi, '').substring(0, 30);
+            
+            totalItems++;
+            totalDisp.innerText = totalItems;
+            
+            playBeep();
+            
             const entry = document.createElement('div');
-            entry.style.padding = "5px";
-            entry.style.borderBottom = "1px solid #1e293b";
-            entry.innerText = `[${time}] تم تمرير بند رقم ${itemCount}`;
+            entry.className = 'item-entry';
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `<b>[${time}]</b> صنف: <span style="color:#fbbf24">${cleanText}</span>`;
+            
+            if (totalItems === 1) log.innerHTML = "";
             log.prepend(entry);
         }
 
         function playBeep() {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = audioCtx.createOscillator();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
             osc.connect(audioCtx.destination);
             osc.start();
             osc.stop(audioCtx.currentTime + 0.1);
         }
 
         function downloadReport() {
-            let data = "الرقم,الوقت,الحالة\n";
-            const logs = log.innerText.split('\n');
-            logs.forEach((line, index) => { if(line) data += `${index},${line},مجرود\n`; });
-            const blob = new Blob([data], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'jard_report.csv';
-            a.click();
+            let csv = "الوقت,اسم المنتج المكتشف\n";
+            const entries = log.querySelectorAll('.item-entry');
+            entries.forEach(e => {
+                const parts = e.innerText.split('] صنف: ');
+                csv += `${parts[0].replace('[','')},${parts[1]}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "inventory_ocr_report.csv");
+            link.click();
         }
 
-        function resetJard() {
-            if(confirm("تصفير الجرد؟")) {
-                itemCount = 0;
-                totalDisplay.innerText = 0;
-                log.innerHTML = "<b>سجل حركة البضائع:</b><br>";
-            }
-        }
-
-        initCamera();
+        init();
     </script>
 </body>
 </html>
