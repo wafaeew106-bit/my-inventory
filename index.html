@@ -3,35 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الجرد الذكي - الفرز التجميعي 2025</title>
+    <title>نظام الجرد الذكي - الإصدار المستقر 2025</title>
     <style>
         :root { --primary: #3b82f6; --success: #10b981; --dark: #0f172a; --panel: #1e293b; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--dark); color: #f1f5f9; text-align: center; margin: 0; padding: 10px; }
-        
         .main-container { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1fr 400px; gap: 20px; }
-        
+        @media (max-width: 800px) { .main-container { grid-template-columns: 1fr; } }
         #video-container { position: relative; background: #000; border-radius: 20px; overflow: hidden; border: 3px solid var(--primary); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        video { width: 100%; display: block; }
-        
-        .side-panel { background: var(--panel); padding: 20px; border-radius: 20px; border: 1px solid #334155; display: flex; flex-direction: column; }
-        
-        .status-pill { display: inline-block; padding: 10px 20px; border-radius: 50px; background: #334155; color: #fbbf24; font-weight: bold; margin-bottom: 15px; font-size: 14px; }
-        
-        /* تصميم جدول الجرد التجميعي */
-        .inventory-table { background: #020617; border-radius: 12px; height: 350px; overflow-y: auto; border: 1px solid #334155; }
+        video { width: 100%; display: block; transform: scaleX(-1); } /* تعكيس الكاميرا لتسهيل الحركة */
+        .side-panel { background: var(--panel); padding: 20px; border-radius: 20px; border: 1px solid #334155; display: flex; flex-direction: column; height: 500px; }
+        .status-pill { display: inline-block; padding: 10px 20px; border-radius: 50px; background: #334155; color: #fbbf24; font-weight: bold; margin-bottom: 15px; font-size: 14px; transition: all 0.3s; }
+        .inventory-table { background: #020617; border-radius: 12px; flex-grow: 1; overflow-y: auto; border: 1px solid #334155; }
         table { width: 100%; border-collapse: collapse; text-align: right; }
         th { background: #1e293b; color: #94a3b8; padding: 12px; font-size: 13px; position: sticky; top: 0; }
         td { padding: 12px; border-bottom: 1px solid #1e293b; color: var(--success); font-weight: bold; font-size: 16px; }
-        tr.new-hit { animation: highlight 1s ease; }
+        tr.new-hit { animation: highlight 1.5s ease-out; }
         @keyframes highlight { from { background: #064e3b; } to { background: transparent; } }
-
-        .btn-export { background: var(--success); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
-        .flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; }
+        .btn-export { background: var(--success); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; transition: opacity 0.1s; z-index: 10; }
     </style>
 </head>
 <body>
 
-    <h2 style="color: var(--primary);">🛒 جرد المحل الذكي (فرز وتجميع تلقائي)</h2>
+    <h2 style="color: var(--primary);">🛒 جرد المحل الذكي <span style="font-size: 12px; color:#64748b;">V2.1 - 2025</span></h2>
     <div id="app-status" class="status-pill">جاري تهيئة النظام...</div>
 
     <div class="main-container">
@@ -41,25 +35,21 @@
         </div>
 
         <div class="side-panel">
-            <div style="font-size: 14px; color: #94a3b8; margin-bottom: 10px;">نتائج الجرد الحالية:</div>
-            
+            <div style="font-size: 14px; color: #94a3b8; margin-bottom: 10px;">📦 سجل الجرد التجميعي:</div>
             <div class="inventory-table">
-                <table id="results-table">
+                <table>
                     <thead>
                         <tr>
-                            <th>اسم الصنف</th>
-                            <th>الكمية</th>
+                            <th>الصنف</th>
+                            <th>العدد</th>
                             <th>آخر رصد</th>
                         </tr>
                     </thead>
-                    <tbody id="inventory-body">
-                        <!-- البيانات ستظهر هنا -->
-                    </tbody>
+                    <tbody id="inventory-body"></tbody>
                 </table>
             </div>
-
-            <button class="btn-export" onclick="exportData()">📥 تحميل تقرير Excel</button>
-            <button onclick="resetAll()" style="background:none; border:none; color:#f43f5e; margin-top:10px; cursor:pointer; font-size:12px;">تصفير الجرد بالكامل</button>
+            <button class="btn-export" onclick="exportToCSV()">📥 تصدير البيانات (CSV)</button>
+            <button onclick="resetAll()" style="background:none; border:none; color:#f43f5e; margin-top:15px; cursor:pointer; font-size:12px; text-decoration: underline;">تصفير الجرد بالكامل</button>
         </div>
     </div>
 
@@ -69,51 +59,65 @@
         const inventoryBody = document.getElementById('inventory-body');
         const flash = document.getElementById('flash-effect');
         
-        let inventoryData = {}; // المخزن الرئيسي: { "أرز": { count: 5, lastTime: "10:00" } }
+        let inventoryData = JSON.parse(localStorage.getItem('jard_data')) || {}; 
         let isListening = false;
         let lastFrameData;
         let recognition;
 
-        // 1. تشغيل التطبيق
         async function init() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
-                status.innerText = "✅ النظام جاهز! مرر المنتج وانطق اسمه";
+                status.innerText = "✅ النظام جاهز! مرر منتجاً ثم انطق اسمه";
                 setupVoice();
+                renderTable(); // عرض البيانات القديمة إن وجدت
                 requestAnimationFrame(checkMotion);
             } catch (err) {
-                status.innerText = "❌ فشل الوصول للكاميرا";
+                status.innerText = "❌ خطأ: يرجى السماح بوصول الكاميرا والميكروفون";
+                console.error(err);
             }
         }
 
-        // 2. إعداد التعرف الصوتي المستمر
         function setupVoice() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                status.innerText = "❌ متصفحك لا يدعم التعرف الصوتي";
+                return;
+            }
+
             recognition = new SpeechRecognition();
-            recognition.lang = 'ar-EG,en-US';
+            recognition.lang = 'ar-EG';
             recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
 
             recognition.onresult = (event) => {
-                const itemName = event.results[0].transcript.trim().toLowerCase();
-                processJard(itemName);
+                // الحل النهائي للخطأ: الوصول الآمن للبيانات
+                if (event.results && event.results[0] && event.results[0][0]) {
+                    const itemName = event.results[0][0].transcript.trim();
+                    if (itemName) {
+                        processJard(itemName);
+                    }
+                }
             };
 
             recognition.onend = () => {
                 isListening = false;
-                status.innerText = "✅ مرر المنتج التالي";
-                status.style.background = "#334155";
+                if (status.innerText.includes("🎤")) {
+                    status.innerText = "✅ تم الرصد! مرر المنتج التالي";
+                    status.style.background = "#334155";
+                }
             };
 
-            recognition.onerror = () => {
+            recognition.onerror = (event) => {
                 isListening = false;
-                status.innerText = "⚠️ لم أسمعك، حاول مرة أخرى";
+                status.innerText = "⚠️ لم أسمعك جيداً.. حاول التمرير مرة أخرى";
+                status.style.background = "#334155";
+                console.log("Speech Error:", event.error);
             };
         }
 
-        // 3. مراقبة حركة التمرير
         function checkMotion() {
-            if (!isListening) {
+            if (!isListening && video.readyState === video.HAVE_ENOUGH_DATA) {
                 const canvas = document.createElement('canvas');
                 canvas.width = 64; canvas.height = 48;
                 const ctx = canvas.getContext('2d');
@@ -125,7 +129,7 @@
                     for (let i = 0; i < currentData.length; i += 4) {
                         diff += Math.abs(currentData[i] - lastFrameData[i]);
                     }
-                    if (diff > 12000) { // حساسية الرصد
+                    if (diff > 15000) { // حساسية الحركة
                         startScan();
                     }
                 }
@@ -134,46 +138,42 @@
             requestAnimationFrame(checkMotion);
         }
 
-        // 4. بدء عملية المسح
         function startScan() {
+            if (isListening) return;
             isListening = true;
-            flash.style.opacity = "0.7";
-            setTimeout(() => flash.style.opacity = "0", 100);
             
-            playBeep();
+            // تأثير الفلاش البصري
+            flash.style.opacity = "0.5";
+            setTimeout(() => flash.style.opacity = "0", 150);
+            
             status.innerText = "🎤 اسمعك.. ما هو اسم هذا الصنف؟";
             status.style.background = "#10b981";
             
-            try { recognition.start(); } catch(e) {}
+            try { recognition.start(); } catch(e) { isListening = false; }
         }
 
-        // 5. المعالجة الذكية (التجميع على نفس البند)
         function processJard(name) {
-            const time = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const time = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             
-            if (inventoryData[name]) {
-                // إذا كان الصنف موجوداً، نزيد العدد
-                inventoryData[name].count++;
-                inventoryData[name].lastTime = time;
+            // توحيد الأسماء (إزالة ال التعريف الزائدة مثلاً أو المسافات)
+            const cleanName = name.replace(/^الـ|^ال/g, '').trim();
+
+            if (inventoryData[cleanName]) {
+                inventoryData[cleanName].count++;
+                inventoryData[cleanName].lastTime = time;
             } else {
-                // إذا كان صنفاً جديداً، ننشئه
-                inventoryData[name] = { count: 1, lastTime: time };
+                inventoryData[cleanName] = { count: 1, lastTime: time };
             }
             
-            renderTable(name); // نمرر الاسم لعمل تأثير بصري على السطر المحدث
+            localStorage.setItem('jard_data', JSON.stringify(inventoryData));
+            renderTable(cleanName);
         }
 
-        // 6. تحديث جدول البيانات على الشاشة
-        function renderTable(highlightedName) {
+        function renderTable(highlightedName = null) {
             inventoryBody.innerHTML = "";
-            
-            // ترتيب الأصناف بحيث يظهر أحدث صنف تم تعديله في الأعلى
-            const sortedItems = Object.keys(inventoryData).sort((a, b) => {
-                if (a === highlightedName) return -1;
-                return 0;
-            });
+            const items = Object.keys(inventoryData).reverse(); // الأحدث يظهر أولاً
 
-            sortedItems.forEach(name => {
+            items.forEach(name => {
                 const row = document.createElement('tr');
                 if (name === highlightedName) row.className = "new-hit";
                 
@@ -186,34 +186,34 @@
             });
         }
 
-        function playBeep() {
-            const ac = new (window.AudioContext || window.webkitAudioContext)();
-            const o = ac.createOscillator();
-            o.connect(ac.destination);
-            o.start(); o.stop(ac.currentTime + 0.1);
-        }
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "الصنف,الكمية,آخر وقت رصد\n";
+            
+            Object.keys(inventoryData).forEach(name => {
+                csvContent += `${name},${inventoryData[name].count},${inventoryData[name].lastTime}\n`;
+            });
 
-        function exportData() {
-            let csv = "\uFEFFالصنف,الكمية,آخر وقت رصد\n";
-            for (let item in inventoryData) {
-                csv += `${item},${inventoryData[item].count},${inventoryData[item].lastTime}\n`;
-            }
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", "jard_report_final.csv");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `جرد_محل_${new Date().toLocaleDateString()}.csv`);
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
         }
 
         function resetAll() {
-            if(confirm("هل تريد مسح كافة بيانات الجرد الحالية؟")) {
+            if (confirm("هل أنت متأكد من مسح جميع بيانات الجرد؟")) {
                 inventoryData = {};
-                inventoryBody.innerHTML = "";
-                status.innerText = "🔄 تم تصفير البيانات. النظام جاهز.";
+                localStorage.removeItem('jard_data');
+                renderTable();
+                status.innerText = "♻️ تم تصفير البيانات";
             }
         }
 
-        init();
+        // بدء التشغيل
+        window.onload = init;
     </script>
 </body>
 </html>
