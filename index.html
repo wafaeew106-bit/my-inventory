@@ -1,1 +1,44 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> وفائى أداة الجرد - نسخة كسر الحظر</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 20px; }
+        .main-box { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border: 2px solid #333; }
+        video { width: 100%; border-radius: 10px; background: #000; display: block; }
+        #log { margin-top: 15px; font-size: 13px; color: #4caf50; background: #000; padding: 10px; border-radius: 5px; min-height: 40px; }
+        .btn { background: #007bff; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 18px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
 
+    <div class="main-box">
+        <h3>🛒 جرد المحل (بدون روابط خارجية)</h3>
+        <video id="webcam" autoplay playsinline></video>
+        <div id="log">انتظار تشغيل الكاميرا...</div>
+        <button class="btn" onclick="startCamera()">تشغيل الكاميرا الآن</button>
+    </div>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const log = document.getElementById('log');
+
+        async function startCamera() {
+            try {
+                log.innerText = "جاري طلب إذن الكاميرا...";
+                // طلب الكاميرا الخلفية باستخدام جافا سكريبت الخام
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" }
+                });
+                video.srcObject = stream;
+                log.innerText = "✅ الكاميرا تعمل بنجاح! لا توجد أخطاء 404 هنا.";
+            } catch (err) {
+                log.innerText = "خطأ: " + err.message;
+                log.style.color = "#f44336";
+            }
+        }
+    </script>
+</body>
+</html>
