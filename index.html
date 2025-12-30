@@ -3,139 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام جرد المحل 2025 - نسخة العمل الأكيد</title>
+    <title>نظام الجرد الذكي - التعرف البصري 2025</title>
+    
+    <!-- مكتبات الذكاء الاصطناعي الأساسية -->
+    <script src="cdn.jsdelivr.net"></script>
+    <script src="cdn.jsdelivr.net"></script>
+    <script src="cdn.jsdelivr.net"></script>
+
     <style>
-        /* تصميم عصري مريح للعين أثناء الجرد الطويل */
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f8fafc; text-align: center; margin: 0; padding: 20px; }
-        .app-container { max-width: 500px; margin: auto; background: #1e293b; padding: 25px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid #334155; }
-        .camera-view { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; border: 2px solid #3b82f6; box-shadow: inset 0 0 20px rgba(0,0,0,1); }
-        video { width: 100%; display: block; filter: brightness(1.1); }
-        .counter-section { display: flex; justify-content: space-around; margin-top: 20px; background: #0f172a; padding: 15px; border-radius: 15px; }
-        .stat-box { text-align: center; }
-        .stat-num { font-size: 36px; font-weight: bold; color: #10b981; display: block; }
-        .stat-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; }
-        .scan-btn { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 25px; border-radius: 20px; width: 100%; font-size: 22px; font-weight: bold; cursor: pointer; margin-top: 20px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); transition: 0.2s; -webkit-tap-highlight-color: transparent; }
-        .scan-btn:active { transform: scale(0.95); box-shadow: 0 5px 10px rgba(16, 185, 129, 0.2); }
-        #event-log { margin-top: 20px; background: #020617; padding: 15px; border-radius: 12px; height: 130px; overflow-y: auto; text-align: right; font-family: monospace; border: 1px solid #1e293b; }
-        .log-line { border-bottom: 1px solid #1e293b; padding: 6px 0; color: #34d399; font-size: 13px; animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; text-align: center; margin: 0; padding: 10px; }
+        .app-container { max-width: 800px; margin: auto; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+        #video-box { position: relative; background: #000; border-radius: 15px; overflow: hidden; border: 3px solid #3b82f6; }
+        video { width: 100%; height: auto; }
+        .controls { background: #1e293b; padding: 20px; border-radius: 15px; border: 1px solid #334155; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: none; }
+        button { width: 100%; padding: 12px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; }
+        .train-btn { background: #f59e0b; color: white; }
+        .inventory-list { background: #020617; padding: 15px; border-radius: 15px; text-align: right; height: 300px; overflow-y: auto; }
+        .item-row { display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; padding: 10px 0; color: #10b981; }
+        #status-bar { grid-column: span 2; background: #334155; padding: 10px; border-radius: 10px; color: #fbbf24; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
+    <h2>🚀 نظام الجرد بالتعرف البصري (بدون باركود)</h2>
+    
     <div class="app-container">
-        <h2 style="margin: 0 0 5px 0; color: #3b82f6;">🛒 جرد المحل الذكي</h2>
-        <p style="color: #94a3b8; font-size: 13px; margin-bottom: 20px;">نسخة 2025 - تشغيل مستقل (Offline Ready)</p>
+        <div id="status-bar">جاري تحميل "العقل الاصطناعي" لمسح المنتجات...</div>
 
-        <div class="camera-view">
-            <video id="inventory-cam" autoplay playsinline muted></video>
+        <div id="video-box">
+            <video id="webcam" autoplay playsinline muted></video>
         </div>
 
-        <div class="counter-section">
-            <div class="stat-box">
-                <span class="stat-num" id="main-counter">0</span>
-                <span class="stat-label">قطع مجرودة</span>
+        <div class="controls">
+            <h4>1. تعريف صنف جديد</h4>
+            <input type="text" id="item-name" placeholder="اكتب اسم المنتج (مثلاً: زيت عافية)">
+            <button class="train-btn" onmousedown="train(true)" onmouseup="train(false)">اضغط باستمرار للتعريف (تصوير)</button>
+            <p style="font-size: 11px; color: #94a3b8;">* ضع المنتج أمام الكاميرا واضغط لثانيتين</p>
+            
+            <hr style="border: 0.5px solid #334155;">
+            
+            <h4>2. سجل الجرد التلقائي</h4>
+            <div id="inventory-table" class="inventory-list">
+                <!-- المنتجات ستظهر هنا تلقائياً -->
             </div>
-            <div class="stat-box">
-                <span class="stat-num" style="color: #fbbf24;" id="session-timer">00:00</span>
-                <span class="stat-label">وقت العمل</span>
-            </div>
-        </div>
-
-        <button class="scan-btn" onclick="registerItem()">رصد صنف (+1)</button>
-        
-        <div id="event-log">
-            <div style="color: #475569; text-align: center;">النظام جاهز لبدء الجرد...</div>
-        </div>
-        
-        <div style="margin-top: 15px;">
-            <button onclick="resetApp()" style="background:none; border:none; color:#f43f5e; font-size:12px; cursor:pointer; text-decoration: underline;">تصفير الجرد الحالي</button>
         </div>
     </div>
 
     <script>
-        // الكود يعتمد على جافا سكريبت المتصفح فقط لضمان عدم ظهور خطأ 404
-        const video = document.getElementById('inventory-cam');
-        const counterEl = document.getElementById('main-counter');
-        const logEl = document.getElementById('event-log');
-        let totalCount = 0;
-        let startTime = Date.now();
+        const video = document.getElementById('webcam');
+        const itemNameInput = document.getElementById('item-name');
+        const statusBar = document.getElementById('status-bar');
+        const inventoryTable = document.getElementById('inventory-table');
+        
+        let classifier;
+        let net;
+        let isTraining = false;
+        let inventory = {}; // تخزين الأعداد { "اسم المنتج": العدد }
 
-        // 1. تشغيل الكاميرا فوراً وبطريقة مستقرة
-        async function activateCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }, 
-                    audio: false 
-                });
-                video.srcObject = stream;
-            } catch (err) {
-                console.error("Camera Access Denied:", err);
-                alert("تنبيه: يجب السماح للكاميرا بالعمل من إعدادات المتصفح لبدء الجرد.");
+        async function init() {
+            statusBar.innerText = "جاري الاتصال بسيرفرات جوجل لتحميل المحرك...";
+            
+            // تحميل مصنف KNN ونموذج MobileNet
+            classifier = knnClassifier.create();
+            net = await mobilenet.load();
+
+            statusBar.innerText = "✅ النظام جاهز! قم بتعريف أول منتج الآن";
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            
+            animate();
+        }
+
+        // وظيفة التدريب (تعريف المنتج بالصور)
+        async function train(pressing) {
+            isTraining = pressing;
+            if (pressing && itemNameInput.value === "") {
+                alert("يرجى كتابة اسم المنتج أولاً!");
+                isTraining = false;
             }
         }
 
-        // 2. وظيفة رصد وتسجيل المنتج
-        function registerItem() {
-            totalCount++;
-            counterEl.innerText = totalCount;
-            
-            // إضافة صوت "بييب" احترافي مولد برمجياً (لا يحتاج ملف صوتي)
-            playScanSound();
+        async function animate() {
+            if (net) {
+                const img = tf.browser.fromPixels(video);
+                const activation = net.infer(img, 'conv_preds');
 
-            // إضافة هزة خفيفة للموبايل (Haptic Feedback)
-            if (window.navigator.vibrate) window.navigator.vibrate(40);
+                // إذا كنا نضغط على زر التعريف، نضيف الصور للمصنف
+                if (isTraining) {
+                    classifier.addExample(activation, itemNameInput.value);
+                    if (!inventory[itemNameInput.value]) {
+                        inventory[itemNameInput.value] = 0;
+                        updateTable();
+                    }
+                    statusBar.innerText = "جاري حفظ شكل المنتج: " + itemNameInput.value;
+                }
 
-            // توثيق في السجل
-            const now = new Date();
-            const timestamp = now.getHours().toString().padStart(2, '0') + ":" + 
-                              now.getMinutes().toString().padStart(2, '0') + ":" + 
-                              now.getSeconds().toString().padStart(2, '0');
-            
-            const entry = document.createElement('div');
-            entry.className = 'log-line';
-            entry.innerText = `[${timestamp}] تم جرد صنف رقم (${totalCount})`;
-            
-            if (totalCount === 1) logEl.innerHTML = ""; // مسح رسالة الترحيب عند أول جرد
-            logEl.prepend(entry);
+                // إذا كان المصنف يحتوي على بيانات، نبدأ التوقع التلقائي
+                if (classifier.getNumClasses() > 0) {
+                    const result = await classifier.predictClass(activation);
+                    const { label, confidences } = result;
+
+                    // إذا كان النظام متأكداً بنسبة أكثر من 90%
+                    if (confidences[label] > 0.95) {
+                        handleAutoCount(label);
+                    }
+                }
+                img.dispose();
+            }
+            requestAnimationFrame(animate);
         }
 
-        // 3. مولد صوت "بييب" الجرد
-        function playScanSound() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } catch (e) { /* التجاهل إذا كان المتصفح يحظر الصوت تلقائياً */ }
-        }
+        let lastDetected = "";
+        let lastTime = 0;
 
-        // 4. مؤقت الجلسة
-        setInterval(() => {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
-            const s = (elapsed % 60).toString().padStart(2, '0');
-            document.getElementById('session-timer').innerText = `${m}:${s}`;
-        }, 1000);
-
-        function resetApp() {
-            if(confirm("سيتم حذف سجل الجرد الحالي، هل أنت متأكد؟")) {
-                totalCount = 0;
-                counterEl.innerText = 0;
-                logEl.innerHTML = '<div style="color: #475569; text-align: center;">تم تصفير السجل.</div>';
-                startTime = Date.now();
+        function handleAutoCount(label) {
+            const now = Date.now();
+            // منع تكرار العد لنفس المنتج في أقل من 3 ثوانٍ
+            if (label !== lastDetected || now - lastTime > 3000) {
+                inventory[label]++;
+                lastDetected = label;
+                lastTime = now;
+                playBeep();
+                updateTable();
+                statusBar.innerText = "✅ تم جرد: " + label;
             }
         }
 
-        // بدء التشغيل
-        activateCamera();
+        function updateTable() {
+            inventoryTable.innerHTML = "";
+            for (let name in inventory) {
+                const row = document.createElement('div');
+                row.className = 'item-row';
+                row.innerHTML = `<span>${name}</span> <span>العدد: ${inventory[name]}</span>`;
+                inventoryTable.appendChild(row);
+            }
+        }
+
+        function playBeep() {
+            const context = new AudioContext();
+            const osc = context.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = 1000;
+            osc.connect(context.destination);
+            osc.start();
+            osc.stop(context.currentTime + 0.1);
+        }
+
+        init();
     </script>
 </body>
 </html>
