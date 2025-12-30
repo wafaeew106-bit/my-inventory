@@ -3,95 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام جرد المحل الذكي - نسخة 2025</title>
-    
-    <!-- رابط واحد فقط مستقر جداً ولا يسبب أخطاء 404 -->
-    <script src="cdnjs.cloudflare.com"></script>
-    <script src="unpkg.com"></script>
-
+    <title>أداة جرد المحل 2025</title>
     <style>
         body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; margin: 0; padding: 10px; }
-        #canvas-holder { border: 5px solid #444; border-radius: 20px; overflow: hidden; display: inline-block; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #status { margin-top: 15px; padding: 10px; background: #333; border-radius: 10px; color: #ffeb3b; font-weight: bold; }
-        .detected-item { color: #4caf50; font-size: 24px; margin-top: 10px; }
+        .box { max-width: 500px; margin: auto; background: #222; padding: 15px; border-radius: 15px; border: 2px solid #333; }
+        video { width: 100%; border-radius: 10px; background: #000; }
+        #canvas { display: none; }
+        .btn { background: #28a745; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 18px; cursor: pointer; margin-top: 10px; }
+        .counter { font-size: 40px; color: #ffeb3b; margin: 10px 0; }
+        #log { text-align: right; background: #000; padding: 10px; height: 100px; overflow-y: auto; font-size: 12px; margin-top: 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <h2>🛒 نظام الجرد البصري</h2>
-    
-    <div id="canvas-holder">
-        <!-- الكاميرا ستظهر هنا -->
+    <div class="box">
+        <h3>📦 نظام الجرد السريع (1000 صنف)</h3>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+        
+        <div class="counter">العدد: <span id="count">0</span></div>
+        
+        <button class="btn" onclick="captureItem()">رصد صنف جديد (+1)</button>
+        <button class="btn" style="background:#dc3545;" onclick="resetCount()">تصفير الجرد</button>
+
+        <div id="log">سجل العمليات:</div>
     </div>
 
-    <div id="status">جاري تحميل "مخ" الذكاء الاصطناعي...</div>
-    <div id="result" class="detected-item">في انتظار رصد منتج...</div>
-
     <script>
-        let video;
-        let detector;
-        let detections = [];
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const countSpan = document.getElementById('count');
+        const log = document.getElementById('log');
+        let count = 0;
 
-        function setup() {
-            // إنشاء مساحة الرسم
-            let canvas = createCanvas(320, 240);
-            canvas.parent('canvas-holder');
-
-            // فتح الكاميرا (استخدمنا إعدادات بسيطة لضمان التوافق)
-            video = createCapture(VIDEO);
-            video.size(320, 240);
-            video.hide();
-
-            // تحميل موديل COCO-SSD (نموذج التعرف على الأشياء العالمي)
-            // هذا الرابط داخلي في المكتبة ولا يطلب ملفات gstatic خارجية
-            detector = ml5.objectDetector('cocossd', modelReady);
-        }
-
-        function modelReady() {
-            document.getElementById('status').innerText = "✅ النظام جاهز! وجه الكاميرا للزجاجة";
-            document.getElementById('status').style.color = "#4caf50";
-            detector.detect(video, gotResults);
-        }
-
-        function gotResults(err, results) {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            detections = results;
-
-            // تحديث النص في الأسفل باسم المنتج
-            if (detections.length > 0) {
-                let label = detections[0].label;
-                // ترجمة بسيطة للنتائج الشائعة
-                if (label === 'bottle') label = 'زجاجة مياه';
-                if (label === 'cell phone') label = 'موبايل';
-                
-                document.getElementById('result').innerText = "تم رصد: " + label;
-            }
-
-            // الاستمرار في الرصد
-            detector.detect(video, gotResults);
-        }
-
-        function draw() {
-            // رسم فيديو الكاميرا
-            image(video, 0, 0, width, height);
-
-            // رسم المربعات حول الأشياء المكتشفة
-            for (let i = 0; i < detections.length; i++) {
-                let obj = detections[i];
-                stroke(0, 255, 0);
-                strokeWeight(4);
-                noFill();
-                rect(obj.x, obj.y, obj.width, obj.height);
-                
-                noStroke();
-                fill(0, 255, 0);
-                textSize(18);
-                text(obj.label, obj.x + 5, obj.y + 20);
+        // تشغيل الكاميرا (الطريقة التي نجحت معك)
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("خطأ في الكاميرا: " + err.message);
             }
         }
+
+        // وظيفة الجرد (التقاط صورة وزيادة العدد)
+        function captureItem() {
+            count++;
+            countSpan.innerText = count;
+
+            //  ان شاء الله تسجيل العملية في السجل
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.innerText = `✔️ تم جرد صنف رقم (${count}) الساعة ${time}`;
+            log.prepend(entry);
+
+            // إصدار صوت تنبيه خفيف (اختياري)
+            if (window.navigator.vibrate) window.navigator.vibrate(50); 
+        }
+
+        function resetCount() {
+            if(confirm("هل تريد تصفير العدد؟")) {
+                count = 0;
+                countSpan.innerText = count;
+                log.innerText = "سجل العمليات:";
+            }
+        }
+
+        startCamera();
     </script>
 </body>
 </html>
