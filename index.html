@@ -3,34 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام جرد المحل الذكي - نسخة 2025</title>
+    <title>نظام جرد المحل الذكي 2025</title>
     
-    <!-- استدعاء مكتبة ml5.js وهي الأسهل والأضمن للعمل على المتصفحات دون أخطاء مسارات -->
+    <!-- روابط من سيرفرات مختلفة تماماً ومستقرة جداً لعام 2025 -->
     <script src="cdnjs.cloudflare.com"></script>
     <script src="unpkg.com"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        #canvas-container { border: 4px solid #333; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
-        #status { margin-top: 20px; padding: 10px 20px; border-radius: 50px; background: #333; font-size: 14px; color: #ffeb3b; }
-        .info-panel { margin-top: 15px; text-align: center; max-width: 400px; line-height: 1.6; color: #bbb; }
-        .detected-list { margin-top: 10px; color: #4caf50; font-weight: bold; font-size: 18px; }
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; padding: 10px; }
+        #canvas-holder { border: 5px solid #333; border-radius: 15px; overflow: hidden; display: inline-block; background: #000; }
+        .status-msg { margin-top: 15px; padding: 10px; border-radius: 8px; background: #222; color: #4caf50; font-weight: bold; }
+        .info { color: #888; font-size: 12px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h2>🛒 جرد المنتجات بالرؤية الحاسوبية</h2>
+    <h3>🛒 جرد المنتجات بالذكاء الاصطناعي</h3>
     
-    <div id="canvas-container">
-        <!-- سيتم إنشاء الكاميرا والرسم هنا بواسطة السكربت -->
+    <div id="canvas-holder">
+        <!-- الكاميرا ستظهر هنا -->
     </div>
 
-    <div id="status">جاري تحميل مخ الذكاء الاصطناعي...</div>
-    
-    <div class="info-panel">
-        وجه الكاميرا نحو المنتج. سيتم التعرف على الصنف وتحديده آلياً.
-        <div id="item-name" class="detected-list">انتظار الرصد...</div>
-    </div>
+    <div id="status" class="status-msg">انتظر.. جاري تشغيل العقل الاصطناعي...</div>
+    <p class="info">إذا لم تعمل الكاميرا، تأكد من الضغط على "سماح" في المتصفح.</p>
 
     <script>
         let video;
@@ -38,63 +33,45 @@
         let detections = [];
 
         function setup() {
-            // إنشاء لوحة الرسم ووضعها داخل الحاوية
-            const canvas = createCanvas(320, 240);
-            canvas.parent('canvas-container');
+            // إنشاء مساحة الرسم
+            let canvas = createCanvas(320, 240);
+            canvas.parent('canvas-holder');
 
-            // فتح كاميرا الموبايل الخلفية
+            // فتح كاميرا الموبايل الخلفية (environment)
             video = createCapture({
                 video: { facingMode: "environment" },
                 audio: false
             });
             video.size(320, 240);
-            video.hide(); // إخفاء عنصر الفيديو الأصلي لإظهار الرسم فقط
+            video.hide();
 
-            // تحميل نموذج COCO-SSD للتعرف على الأشياء
-            // هذا النموذج مدمج ولن يعطيك أخطاء 404
-            detector = ml5.objectDetector('cocossd', modelReady);
+            // تحميل موديل التعرف على الأشياء (COCO-SSD)
+            detector = ml5.objectDetector('cocossd', () => {
+                document.getElementById('status').innerText = "✅ النظام جاهز! وجه الكاميرا للمنتج";
+                detector.detect(video, gotResults);
+            });
         }
 
-        function modelReady() {
-            document.getElementById('status').innerText = "✅ النظام جاهز! ابدأ الجرد الآن";
-            document.getElementById('status').style.color = "#4caf50";
-            // البدء في عملية الرصد
-            detector.detect(video, gotDetections);
-        }
-
-        function gotDetections(error, results) {
-            if (error) {
-                console.error(error);
-                return;
-            }
+        function gotResults(err, results) {
+            if (err) return;
             detections = results;
-            
-            // تحديث اسم المنتج المكتشف في الأسفل
-            if (detections.length > 0) {
-                document.getElementById('item-name').innerText = "تم رصد: " + detections[0].label;
-            }
-
-            // الاستمرار في الرصد بشكل دائم
-            detector.detect(video, gotDetections);
+            detector.detect(video, gotResults);
         }
 
         function draw() {
-            // رسم ما تراه الكاميرا على اللوحة
             image(video, 0, 0, width, height);
 
-            // رسم المربعات والأسماء فوق المنتجات المكتشفة
             for (let i = 0; i < detections.length; i++) {
-                let object = detections[i];
-                
+                let obj = detections[i];
                 stroke(0, 255, 0);
                 strokeWeight(4);
                 noFill();
-                rect(object.x, object.y, object.width, object.height);
+                rect(obj.x, obj.y, obj.width, obj.height);
                 
                 noStroke();
                 fill(0, 255, 0);
-                textSize(16);
-                text(object.label, object.x, object.y - 10);
+                textSize(18);
+                text(obj.label, obj.x, obj.y - 10);
             }
         }
     </script>
