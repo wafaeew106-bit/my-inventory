@@ -3,115 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الجرد الذكي - مرحلة الرصد</title>
+    <title>نظام جرد المحل الذكي - نسخة 2025</title>
     
-    <!-- استدعاء TensorFlow من سيرفر جوجل الرسمي (الأكثر استقراراً) -->
-    <script src="www.gstatic.com"></script>
-    <script src="www.gstatic.com"></script>
+    <!-- رابط واحد فقط مستقر جداً ولا يسبب أخطاء 404 -->
+    <script src="cdnjs.cloudflare.com"></script>
+    <script src="unpkg.com"></script>
 
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; padding: 10px; }
-        .container { max-width: 600px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #canvas-wrap { position: relative; width: 100%; border-radius: 15px; overflow: hidden; background: #000; }
-        video { width: 100%; display: block; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #status-bar { margin-top: 20px; padding: 10px; border-radius: 10px; background: #333; color: #ffeb3b; font-weight: bold; }
-        .inventory-log { margin-top: 20px; text-align: right; background: #000; padding: 15px; border-radius: 10px; height: 150px; overflow-y: auto; font-family: monospace; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; margin: 0; padding: 10px; }
+        #canvas-holder { border: 5px solid #444; border-radius: 20px; overflow: hidden; display: inline-block; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #status { margin-top: 15px; padding: 10px; background: #333; border-radius: 10px; color: #ffeb3b; font-weight: bold; }
+        .detected-item { color: #4caf50; font-size: 24px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>🚀 جرد المحل بالذكاء الاصطناعي</h2>
-        
-        <div id="canvas-wrap">
-            <video id="webcam" autoplay playsinline muted></video>
-            <canvas id="overlay"></canvas>
-        </div>
-
-        <div id="status-bar">جاري تشغيل محرك الرصد...</div>
-
-        <div class="inventory-log" id="log">
-            سجل الجرد اللحظي: <br>
-            ------------------- <br>
-        </div>
+    <h2>🛒 نظام الجرد البصري</h2>
+    
+    <div id="canvas-holder">
+        <!-- الكاميرا ستظهر هنا -->
     </div>
 
+    <div id="status">جاري تحميل "مخ" الذكاء الاصطناعي...</div>
+    <div id="result" class="detected-item">في انتظار رصد منتج...</div>
+
     <script>
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('overlay');
-        const ctx = canvas.getContext('2d');
-        const statusBar = document.getElementById('status-bar');
-        const log = document.getElementById('log');
-        let model;
+        let video;
+        let detector;
+        let detections = [];
 
-        // 1. تشغيل الكاميرا (التي نجحت معك)
-        async function setupCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment" },
-                audio: false
-            });
-            video.srcObject = stream;
-            return new Promise((resolve) => {
-                video.onloadedmetadata = () => resolve(video);
-            });
+        function setup() {
+            // إنشاء مساحة الرسم
+            let canvas = createCanvas(320, 240);
+            canvas.parent('canvas-holder');
+
+            // فتح الكاميرا (استخدمنا إعدادات بسيطة لضمان التوافق)
+            video = createCapture(VIDEO);
+            video.size(320, 240);
+            video.hide();
+
+            // تحميل موديل COCO-SSD (نموذج التعرف على الأشياء العالمي)
+            // هذا الرابط داخلي في المكتبة ولا يطلب ملفات gstatic خارجية
+            detector = ml5.objectDetector('cocossd', modelReady);
         }
 
-        // 2. تحميل "عقل" الذكاء الاصطناعي
-        async function loadAI() {
-            try {
-                statusBar.innerText = "جاري تحميل قاعدة بيانات المنتجات...";
-                model = await cocoSsd.load();
-                statusBar.innerText = "✅ النظام جاهز! وجه الكاميرا للمنتجات";
-                statusBar.style.color = "#4caf50";
-                predictFrame();
-            } catch (err) {
-                statusBar.innerText = "فشل تحميل المحرك. تأكد من الإنترنت.";
-                statusBar.style.color = "#ff4444";
+        function modelReady() {
+            document.getElementById('status').innerText = "✅ النظام جاهز! وجه الكاميرا للزجاجة";
+            document.getElementById('status').style.color = "#4caf50";
+            detector.detect(video, gotResults);
+        }
+
+        function gotResults(err, results) {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            detections = results;
+
+            // تحديث النص في الأسفل باسم المنتج
+            if (detections.length > 0) {
+                let label = detections[0].label;
+                // ترجمة بسيطة للنتائج الشائعة
+                if (label === 'bottle') label = 'زجاجة مياه';
+                if (label === 'cell phone') label = 'موبايل';
+                
+                document.getElementById('result').innerText = "تم رصد: " + label;
+            }
+
+            // الاستمرار في الرصد
+            detector.detect(video, gotResults);
+        }
+
+        function draw() {
+            // رسم فيديو الكاميرا
+            image(video, 0, 0, width, height);
+
+            // رسم المربعات حول الأشياء المكتشفة
+            for (let i = 0; i < detections.length; i++) {
+                let obj = detections[i];
+                stroke(0, 255, 0);
+                strokeWeight(4);
+                noFill();
+                rect(obj.x, obj.y, obj.width, obj.height);
+                
+                noStroke();
+                fill(0, 255, 0);
+                textSize(18);
+                text(obj.label, obj.x + 5, obj.y + 20);
             }
         }
-
-        // 3. تحليل الفيديو ورسم المربعات
-        async function predictFrame() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            const predictions = await model.detect(video);
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            predictions.forEach(p => {
-                // رسم المربع حول المنتج
-                ctx.strokeStyle = "#00ff00";
-                ctx.lineWidth = 5;
-                ctx.strokeRect(p.bbox[0], p.bbox[1], p.bbox[2], p.bbox[3]);
-
-                // كتابة اسم الصنف
-                ctx.fillStyle = "#00ff00";
-                ctx.font = "bold 20px Arial";
-                ctx.fillText(`${p.class} (${Math.round(p.score * 100)}%)`, p.bbox[0], p.bbox[1] - 10);
-
-                // إضافة المنتج لسجل الجرد إذا كانت نسبة التأكد عالية
-                if (p.score > 0.75) {
-                    addToLog(p.class);
-                }
-            });
-
-            requestAnimationFrame(predictFrame);
-        }
-
-        function addToLog(itemName) {
-            const time = new Date().toLocaleTimeString();
-            const entry = document.createElement('div');
-            entry.innerText = `[${time}] رصد منتج: ${itemName}`;
-            // تجنب التكرار السريع في السجل
-            if (!log.innerText.includes(itemName + " " + time.slice(0, -3))) {
-                 log.prepend(entry);
-            }
-        }
-
-        // بدء التشغيل التسلسلي
-        setupCamera().then(loadAI);
     </script>
 </body>
 </html>
