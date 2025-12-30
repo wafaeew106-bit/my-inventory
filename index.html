@@ -3,168 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الجرد الذكي - نسخة التعلم البصري 2025</title>
-    
-    <!-- روابط جوجل الرسمية - الأكثر استقراراً لتجنب الحظر -->
-    <script src="www.gstatic.com"></script>
-    <script src="www.gstatic.com"></script>
-    <script src="www.gstatic.com"></script>
-
+    <title>نظام جرد المحل الذكي 2025 - النسخة المستقلة</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f172a; color: white; text-align: center; margin: 0; padding: 10px; }
-        .grid-layout { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1100px; margin: auto; }
-        #video-wrap { position: relative; background: #000; border-radius: 20px; overflow: hidden; border: 4px solid #3b82f6; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        /* تصميم عصري لمحلك */
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #f8fafc; text-align: center; margin: 0; padding: 10px; }
+        .jard-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1000px; margin: auto; }
+        #video-container { position: relative; background: #000; border-radius: 20px; overflow: hidden; border: 3px solid #3b82f6; }
         video { width: 100%; display: block; }
-        .control-panel { background: #1e293b; padding: 20px; border-radius: 20px; border: 1px solid #334155; text-align: right; }
-        input { width: 90%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: none; background: #0f172a; color: white; border: 1px solid #3b82f6; }
-        .btn-train { background: #f59e0b; color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
-        .inventory-table { background: #020617; border-radius: 12px; padding: 10px; height: 250px; overflow-y: auto; font-size: 14px; }
-        .item-row { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #1e293b; color: #10b981; }
-        #status-indicator { background: #334155; padding: 10px; border-radius: 50px; color: #fbbf24; font-size: 13px; margin-bottom: 15px; }
+        .control-panel { background: #1e293b; padding: 20px; border-radius: 20px; border: 1px solid #334155; }
+        .inventory-list { background: #020617; border-radius: 12px; margin-top: 15px; padding: 15px; height: 350px; overflow-y: auto; text-align: right; border: 1px solid #334155; }
+        .item-card { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #1e293b; color: #10b981; font-weight: bold; }
+        .status-tag { display: inline-block; padding: 5px 15px; border-radius: 50px; background: #334155; color: #fbbf24; font-size: 13px; margin-bottom: 15px; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #3b82f6; background: #0f172a; color: white; }
     </style>
 </head>
 <body>
 
-    <h2 style="color: #3b82f6;">🛒 نظام الجرد بالبصمة البصرية (بدون باركود)</h2>
-    
-    <div class="grid-layout">
-        <div id="video-wrap">
+    <h2 style="color: #3b82f6;">🛒 نظام الجرد السريع (إصدار العمل المستقل 2025)</h2>
+    <div id="status" class="status-tag">النظام يعمل محلياً بنسبة 100% (وداعاً للـ 404)</div>
+
+    <div class="jard-grid">
+        <div id="video-container">
             <video id="webcam" autoplay playsinline muted></video>
+            <!-- فلاش بصري عند الرصد -->
             <div id="flash" style="position:absolute; top:0; left:0; width:100%; height:100%; background:white; opacity:0; pointer-events:none;"></div>
         </div>
 
         <div class="control-panel">
-            <div id="status-indicator">جاري شحن "المخ" الاصطناعي...</div>
+            <h4>إعداد الصنف الحالي:</h4>
+            <input type="text" id="current-item-name" placeholder="اكتب اسم الصنف (مثلاً: أرز)">
+            <p style="font-size: 11px; color: #94a3b8;">* بمجرد تمرير أي شيء أمام الكاميرا سيتم رصده تحت هذا الاسم.</p>
             
-            <h4>1. تعريف منتج جديد</h4>
-            <input type="text" id="class-name" placeholder="اكتب اسم الصنف (مثلاً: أرز)">
-            <button class="btn-train" onmousedown="startTraining()" onmouseup="stopTraining()" ontouchstart="startTraining()" ontouchend="stopTraining()">
-                اضغط باستمرار لتصوير البصمة البصرية
-            </button>
-            <p style="font-size: 10px; color: #94a3b8;">* ضع المنتج أمام الكاميرا وحركه قليلاً أثناء الضغط.</p>
-
-            <hr style="border: 0.5px solid #334155; margin: 20px 0;">
-
-            <h4>2. سجل الجرد التلقائي</h4>
-            <div id="inventory-list" class="inventory-table">
-                <!-- النتائج ستظهر هنا -->
+            <div id="inventory-list" class="inventory-list">
+                <b>سجل الأصناف المجرودة:</b>
             </div>
             
-            <button onclick="downloadReport()" style="margin-top:15px; width:100%; background:#10b981; border:none; color:white; padding:10px; border-radius:8px; cursor:pointer;">تحميل تقرير الجرد</button>
+            <button onclick="downloadReport()" style="margin-top: 15px; width: 100%; padding: 12px; background: #10b981; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold;">تحميل التقرير النهائي</button>
         </div>
     </div>
 
     <script>
+        // الكود يعتمد على جافا سكريبت الصافية لتجنب استدعاء أي سيرفرات خارجية محظورة
         const video = document.getElementById('webcam');
-        const status = document.getElementById('status-indicator');
-        const classNameInput = document.getElementById('class-name');
+        const itemNameInput = document.getElementById('current-item-name');
         const list = document.getElementById('inventory-list');
+        const flash = document.getElementById('flash');
         
-        let classifier;
-        let mobilenetModel;
-        let training = false;
-        let inventory = {}; // { "اسم الصنف": العدد }
-        let lastDetected = "";
-        let lastTime = 0;
+        let inventory = {}; // { "الاسم": العدد }
+        let isProcessing = false;
+        let lastFrame;
 
-        async function init() {
+        // 1. فتح الكاميرا فوراً وبدون مكتبات خارجية
+        async function initCamera() {
             try {
-                status.innerText = "جاري الاتصال بمحرك جوجل (MobileNet)...";
-                
-                // تحميل المكتبات
-                classifier = knnClassifier.create();
-                mobilenetModel = await mobilenet.load();
-
-                status.innerText = "✅ النظام جاهز! عرف منتجاتك الآن";
-                status.style.color = "#4caf50";
-
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
                 video.srcObject = stream;
-                
-                detectLoop();
+                // البدء في رصد "التمرير" تلقائياً
+                setInterval(detectMotion, 100); 
             } catch (err) {
-                status.innerText = "❌ فشل التحميل. تأكد من الإنترنت أو جرب متصفح آخر.";
-                console.error(err);
+                alert("يرجى إعطاء صلاحية الكاميرا للابتوب");
             }
         }
 
-        function startTraining() { 
-            if (classNameInput.value === "") { alert("اكتب اسم المنتج أولاً"); return; }
-            training = true; 
-        }
-        function stopTraining() { training = false; status.innerText = "✅ تم حفظ البصمة! جرب تمرير المنتج الآن"; }
+        // 2. تقنية "رصد التمرير التلقائي" (Motion Detection)
+        // تعمل هذه التقنية كبديل ذكي وسريع للذكاء الاصطناعي المحظور في شبكتك
+        function detectMotion() {
+            if (isProcessing || itemNameInput.value === "") return;
 
-        async function detectLoop() {
-            if (mobilenetModel) {
-                const img = tf.browser.fromPixels(video);
-                const activation = mobilenetModel.infer(img, 'conv_preds');
+            const canvas = document.createElement('canvas');
+            canvas.width = 48; canvas.height = 36;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const currentFrame = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-                if (training) {
-                    classifier.addExample(activation, classNameInput.value);
-                    if (!inventory[classNameInput.value]) inventory[classNameInput.value] = 0;
-                    updateUI();
+            if (lastFrame) {
+                let diff = 0;
+                for (let i = 0; i < currentFrame.length; i += 4) {
+                    diff += Math.abs(currentFrame[i] - lastFrame[i]);
                 }
-
-                if (classifier.getNumClasses() > 0) {
-                    const result = await classifier.predictClass(activation);
-                    const { label, confidences } = result;
-
-                    // إذا كان النظام متأكداً بنسبة أكثر من 95%
-                    if (confidences[label] > 0.95) {
-                        handleAutoCount(label);
-                    }
+                
+                // إذا تم رصد تمرير منتج (تغير في الصورة)
+                if (diff > 15000) { 
+                    handleCount(itemNameInput.value);
                 }
-                img.dispose();
             }
-            requestAnimationFrame(detectLoop);
+            lastFrame = currentFrame;
         }
 
-        function handleAutoCount(label) {
-            const now = Date.now();
-            // منع التكرار (انتظار 3 ثوانٍ قبل عد نفس القطعة مرة أخرى)
-            if (label !== lastDetected || (now - lastTime > 3000)) {
-                inventory[label]++;
-                lastDetected = label;
-                lastTime = now;
-                playBeep();
-                updateUI();
-                showFlash();
-            }
+        function handleCount(name) {
+            isProcessing = true;
+            
+            // تسجيل في الذاكرة
+            if (!inventory[name]) inventory[name] = 0;
+            inventory[name]++;
+            
+            playBeep();
+            showFlash();
+            updateUI();
+
+            // منع العد المتكرر للقطعة الواحدة (انتظار ثانيتين قبل القطعة التالية)
+            setTimeout(() => { isProcessing = false; }, 2000);
         }
 
         function updateUI() {
-            list.innerHTML = "";
+            list.innerHTML = "<b>سجل الأصناف المجرودة:</b>";
             for (let name in inventory) {
                 const row = document.createElement('div');
-                row.className = 'item-row';
+                row.className = 'item-card';
                 row.innerHTML = `<span>${name}</span> <span>العدد: ${inventory[name]}</span>`;
-                list.appendChild(row);
+                list.prepend(row);
             }
         }
 
         function playBeep() {
-            const a = new AudioContext();
-            const o = a.createOscillator();
-            o.connect(a.destination);
-            o.start(); o.stop(a.currentTime + 0.1);
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1000, context.currentTime);
+            osc.connect(context.destination);
+            osc.start();
+            osc.stop(context.currentTime + 0.1);
         }
 
         function showFlash() {
-            const f = document.getElementById('flash');
-            f.style.opacity = "0.5";
-            setTimeout(() => f.style.opacity = "0", 100);
+            flash.style.opacity = "0.6";
+            setTimeout(() => { flash.style.opacity = "0"; }, 100);
         }
 
         function downloadReport() {
             let csv = "الصنف,الكمية\n";
             for(let name in inventory) csv += `${name},${inventory[name]}\n`;
-            const blob = new Blob([csv], {type: 'text/csv'});
+            const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = 'inventory_2025.csv'; a.click();
+            a.href = url; a.download = 'jard_report_2025.csv'; a.click();
         }
 
-        init();
+        initCamera();
     </script>
 </body>
 </html>
